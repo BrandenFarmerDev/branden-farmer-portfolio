@@ -1,0 +1,38 @@
+name = "branden-farmer-portfolio-api"
+main = "src/index.ts"
+compatibility_date = "2026-09-27"
+
+[vars]
+ALLOWED_ORIGIN = "http://localhost:5173"
+TURNSTILE_EXPECTED_HOSTNAME = "localhost"
+CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
+CONTACT_TO_EMAIL = "branden_farmer@live.com"
+
+[[ratelimits]]
+name = "CONTACT_RATE_LIMITER"
+namespace_id = "1001"
+
+[ratelimits.simple]
+limit = 5
+period = 60
+
+[env.production]
+name = "branden-farmer-portfolio-api"
+
+[env.production.vars]
+ALLOWED_ORIGIN = "https://brandenfarmer.com"
+TURNSTILE_EXPECTED_HOSTNAME = "brandenfarmer.com"
+CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
+CONTACT_TO_EMAIL = "branden_farmer@live.com"
+
+[[env.production.routes]]
+pattern = "api.brandenfarmer.com"
+custom_domain = true
+
+[[env.production.ratelimits]]
+name = "CONTACT_RATE_LIMITER"
+namespace_id = "1002"
+
+[env.production.ratelimits.simple]
+limit = 5
+period = 60
