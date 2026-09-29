@@ -68,7 +68,9 @@ export function TurnstileWidget({ siteKey, resetKey, onToken, onError }: Turnsti
   const containerRef = useRef<HTMLDivElement>(null);
   const callbacksRef = useRef({ onToken, onError });
 
-  callbacksRef.current = { onToken, onError };
+  useEffect(() => {
+    callbacksRef.current = { onToken, onError };
+  }, [onError, onToken]);
 
   useEffect(() => {
     let active = true;

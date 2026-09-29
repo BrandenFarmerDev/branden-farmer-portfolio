@@ -1,4 +1,4 @@
-import { Github } from "lucide-react";
+import { CodeXml } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
@@ -59,7 +59,7 @@ export function WorkPage() {
       </section>
       <section className="section section-muted" aria-labelledby="public-code-heading">
         <div className="content-width public-code-panel">
-          <Github aria-hidden="true" />
+          <CodeXml aria-hidden="true" />
           <div>
             <p className="eyebrow">Public code</p>
             <h2 id="public-code-heading">{githubContent.title}</h2>
