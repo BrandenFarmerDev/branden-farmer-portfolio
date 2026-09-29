@@ -32,7 +32,7 @@ export default tseslint.config(
     },
     rules: {
       ...jsxA11y.configs.recommended.rules,
-      ...reactHooks.configs["flat/recommended"].rules,
+      ...reactHooks.configs.flat.recommended.rules,
     },
   },
   {

@@ -1,4 +1,4 @@
-import { Clock3, Github, Linkedin, Mail, ShieldCheck } from "lucide-react";
+import { BriefcaseBusiness, Clock3, CodeXml, Mail, ShieldCheck } from "lucide-react";
 import { BookingLink } from "../components/BookingLink";
 import { ContactForm } from "../components/ContactForm";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
@@ -7,8 +7,8 @@ import { bookingContent, siteContent } from "../content/site";
 
 const contactLinks = [
   { icon: Mail, link: siteContent.links.email, description: "Start a direct conversation." },
-  { icon: Linkedin, link: siteContent.links.linkedin, description: "Connect and view professional updates." },
-  { icon: Github, link: siteContent.links.github, description: "Review public code and repositories." },
+  { icon: BriefcaseBusiness, link: siteContent.links.linkedin, description: "Connect and view professional updates." },
+  { icon: CodeXml, link: siteContent.links.github, description: "Review public code and repositories." },
 ];
 
 export function ContactPage() {

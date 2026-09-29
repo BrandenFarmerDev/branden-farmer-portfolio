@@ -15,6 +15,15 @@ describe("Header", () => {
     expect(screen.getByRole("button", { name: "Open navigation" })).toHaveFocus();
   });
 
+  it("closes the mobile menu when an internal navigation link is selected", () => {
+    render(<MemoryRouter><Header /></MemoryRouter>);
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+
+    fireEvent.click(screen.getByRole("link", { name: "Work" }));
+
+    expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
+  });
+
   it("persists the selected color theme", () => {
     render(<MemoryRouter><Header /></MemoryRouter>);
     fireEvent.click(screen.getByRole("button", { name: "Switch to dark mode" }));

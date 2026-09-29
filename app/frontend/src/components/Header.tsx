@@ -1,6 +1,6 @@
-import { Github, Menu, Moon, Sun, X } from "lucide-react";
+import { CodeXml, Menu, Moon, Sun, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { siteContent } from "../content/site";
 
 const navigation = [
@@ -20,11 +20,6 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [theme, setTheme] = useState(getInitialTheme);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const location = useLocation();
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location.pathname]);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -47,7 +42,7 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="header-inner">
-        <Link className="brand" to="/" aria-label={`${siteContent.name}, home`}>
+        <Link className="brand" to="/" aria-label={`${siteContent.name}, home`} onClick={() => setMenuOpen(false)}>
           <span className="brand-mark" aria-hidden="true">{siteContent.shortName}</span>
           <span>{siteContent.name}</span>
         </Link>
@@ -70,11 +65,20 @@ export function Header() {
           aria-label="Primary navigation"
         >
           {navigation.map(([label, path]) => (
-            <NavLink key={path} to={path} className={({ isActive }) => (isActive ? "active" : undefined)}>
+            <NavLink
+              key={path}
+              to={path}
+              className={({ isActive }) => (isActive ? "active" : undefined)}
+              onClick={() => setMenuOpen(false)}
+            >
               {label}
             </NavLink>
           ))}
-          <NavLink className={({ isActive }) => isActive ? "ask-link active" : "ask-link"} to="/ask">
+          <NavLink
+            className={({ isActive }) => isActive ? "ask-link active" : "ask-link"}
+            to="/ask"
+            onClick={() => setMenuOpen(false)}
+          >
             Ask Branden
           </NavLink>
           <a
@@ -84,7 +88,7 @@ export function Header() {
             rel="noopener noreferrer"
             aria-label="Branden Farmer on GitHub (opens in a new tab)"
           >
-            <Github aria-hidden="true" size={17} />
+            <CodeXml aria-hidden="true" size={17} />
             <span className="header-github-label">GitHub</span>
           </a>
           <button

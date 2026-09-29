@@ -1,4 +1,4 @@
-import { ArrowRight, Github } from "lucide-react";
+import { ArrowRight, CodeXml } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
 import { PageIntro } from "../components/PageIntro";
@@ -71,7 +71,7 @@ export function AboutPage() {
       </section>
       <section className="section content-width about-closing-grid">
         <article className="github-callout">
-          <Github aria-hidden="true" />
+          <CodeXml aria-hidden="true" />
           <p className="eyebrow">GitHub</p>
           <h2>{githubContent.title}</h2>
           <p>{githubContent.description}</p>
