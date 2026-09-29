@@ -21,6 +21,7 @@ lib-cov
 # Coverage directory used by tools like istanbul
 coverage
 *.lcov
+/reports/
 
 # nyc test coverage
 .nyc_output
@@ -141,3 +142,23 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Cloudflare local state and Worker secrets
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Local editor and operating system files
+.DS_Store
+Thumbs.db
+.vscode/
+!.vscode/extensions.json
+
+# Local QA, rendering, package-cache, and scratch output
+/.npm-cache/
+/tmp/
+
+# Root source inputs copied into the frontend's tracked asset locations
+/Branden_Farmer_Resume.pdf
+/profile-photo.jpeg

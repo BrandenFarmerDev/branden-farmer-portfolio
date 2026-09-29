@@ -1,0 +1,17 @@
+{
+  "name": "Branden Farmer Portfolio",
+  "short_name": "BF Portfolio",
+  "description": "Branden Farmer's operations, data, automation, and application development portfolio.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f2eb",
+  "theme_color": "#163a4a",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

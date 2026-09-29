@@ -1,0 +1,154 @@
+name: Continuous integration
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, "bfarmer/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Keep production runs intact; newer development pushes may supersede older ones.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test with coverage thresholds
+        run: npm run test:coverage
+
+      - name: Check maintained-code duplication
+        run: npm run duplication
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Build production artifacts
+        run: npm run build
+
+      - name: Audit dependencies
+        run: npm run audit
+
+      - name: Upload coverage reports
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: coverage-reports
+          path: app/*/coverage/
+          if-no-files-found: warn
+          retention-days: 14
+
+  deploy-production:
+    name: Deploy production
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      deployments: write
+    environment:
+      name: production
+      url: https://brandenfarmer.com
+    concurrency:
+      group: portfolio-production
+      cancel-in-progress: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate production configuration
+        shell: bash
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: |
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Missing production secret CLOUDFLARE_ACCOUNT_ID"; exit 1; }
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Missing production secret CLOUDFLARE_API_TOKEN"; exit 1; }
+          test -n "$CLOUDFLARE_PAGES_PROJECT" || { echo "::error::Missing production variable CLOUDFLARE_PAGES_PROJECT"; exit 1; }
+          test -n "$VITE_API_BASE_URL" || { echo "::error::Missing production variable VITE_API_BASE_URL"; exit 1; }
+          test -n "$VITE_TURNSTILE_SITE_KEY" || { echo "::error::Missing production variable VITE_TURNSTILE_SITE_KEY"; exit 1; }
+          test "$CLOUDFLARE_PAGES_PROJECT" = "branden-farmer-portfolio" || { echo "::error::CLOUDFLARE_PAGES_PROJECT does not match the production Pages project"; exit 1; }
+          test "$VITE_API_BASE_URL" = "https://api.brandenfarmer.com" || { echo "::error::VITE_API_BASE_URL does not match the production Worker origin"; exit 1; }
+          case "$VITE_TURNSTILE_SITE_KEY" in replace_*|*placeholder*) echo "::error::VITE_TURNSTILE_SITE_KEY is still a placeholder"; exit 1;; esac
+
+      - name: Validate production Worker bundle
+        run: npm run build:production --workspace @portfolio/backend
+
+      - name: Build production frontend
+        env:
+          VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: npm run build --workspace @portfolio/frontend
+
+      - name: Deploy production Worker
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: deploy --env production
+
+      - name: Verify production Worker
+        shell: bash
+        run: >-
+          curl --fail --show-error --silent
+          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
+          https://api.brandenfarmer.com/api/health
+
+      - name: Deploy production frontend
+        id: deploy-pages
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy app/frontend/dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Pages deployment URL
+        shell: bash
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy-pages.outputs.deployment-url }}
+        run: |
+          test -n "$DEPLOYMENT_URL" || { echo "::error::Cloudflare Pages did not return a deployment URL"; exit 1; }
+          curl --fail --show-error --silent --location --retry 5 --retry-all-errors --retry-delay 5 --max-time 20 "$DEPLOYMENT_URL" > /dev/null
+
+      - name: Verify production site
+        shell: bash
+        run: >-
+          curl --fail --show-error --silent --location
+          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
+          https://brandenfarmer.com/ > /dev/null
