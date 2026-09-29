@@ -16,7 +16,7 @@
     "@fontsource/manrope": "^5.2.7",
     "@fontsource/source-serif-4": "^5.2.7",
     "@portfolio/shared": "*",
-    "lucide-react": "^0.544.0",
+    "lucide-react": "^1.48.0",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.1"
