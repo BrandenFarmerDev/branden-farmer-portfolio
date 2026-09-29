@@ -15,7 +15,7 @@
     "@portfolio/shared": "*"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20250927.0",
+    "@cloudflare/workers-types": "^5.20260926.1",
     "wrangler": "^4.143.0"
   }
 }
