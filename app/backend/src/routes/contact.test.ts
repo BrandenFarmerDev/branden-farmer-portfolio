@@ -109,6 +109,25 @@ describe("contactRoute", () => {
     expect(fetchMock).toHaveBeenCalledTimes(3);
   });
 
+  it("reports partial success when the confirmation request throws", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({
+        success: true,
+        action: "contact_form",
+        hostname: "brandenfarmer.com",
+      }))
+      .mockResolvedValueOnce(Response.json({ id: "notification-email-id" }, { status: 200 }))
+      .mockRejectedValueOnce(new Error("confirmation provider unavailable"));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await contactRoute(createRequest(), createEnv());
+    const body = await response.json<{ message: string }>();
+
+    expect(response.status).toBe(200);
+    expect(body.message).toContain("confirmation email could not be sent");
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
   it("does not attempt confirmation when the notification fails", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(Response.json({

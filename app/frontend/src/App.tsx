@@ -10,7 +10,7 @@ const ContactPage = lazy(() => import("./pages/ContactPage").then((module) => ({
 const AskPage = lazy(() => import("./pages/AskPage").then((module) => ({ default: module.AskPage })));
 
 function RouteFallback() {
-  return <p className="route-loading" role="status">Loading pageâ€¦</p>;
+  return <p className="route-loading" role="status">Loading page…</p>;
 }
 
 export function App() {

@@ -22,4 +22,10 @@ describe("Header", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
     expect(localStorage.getItem("portfolio-theme")).toBe("dark");
   });
+
+  it("marks Ask Branden as the active navigation destination", () => {
+    render(<MemoryRouter initialEntries={["/ask"]}><Header /></MemoryRouter>);
+
+    expect(screen.getByRole("link", { name: "Ask Branden" })).toHaveClass("ask-link", "active");
+  });
 });

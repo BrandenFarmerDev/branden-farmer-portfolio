@@ -252,7 +252,21 @@ export function ContactForm() {
             resetKey={turnstileResetKey}
             onToken={(token) => {
               setTurnstileToken(token);
+              if (!token) return;
+
+              const remainingInvalidFields = Object.entries(fieldErrors)
+                .filter(([field, message]) => field !== "turnstileToken" && Boolean(message))
+                .map(([field]) => fieldLabels[field as keyof ContactFieldErrors]);
               setFieldErrors((current) => ({ ...current, turnstileToken: undefined }));
+
+              if (status === "error" && fieldErrors.turnstileToken) {
+                if (remainingInvalidFields.length > 0) {
+                  setStatusMessage(`Please correct: ${remainingInvalidFields.join(", ")}.`);
+                } else {
+                  setStatus("idle");
+                  setStatusMessage("");
+                }
+              }
             }}
             onError={(message) => {
               setTurnstileToken("");

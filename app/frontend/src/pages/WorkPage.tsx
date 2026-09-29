@@ -1,5 +1,6 @@
 import { Github } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
 import { PageIntro } from "../components/PageIntro";
 import { ProjectCard } from "../components/ProjectCard";
@@ -11,7 +12,19 @@ type Filter = (typeof filters)[number];
 
 export function WorkPage() {
   const [filter, setFilter] = useState<Filter>("All");
+  const location = useLocation();
   const visibleProjects = filter === "All" ? projects : projects.filter((project) => project.category === filter);
+
+  useEffect(() => {
+    if (!location.hash) return;
+
+    try {
+      const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
+      target?.scrollIntoView({ block: "start" });
+    } catch {
+      // Ignore malformed URI fragments rather than interrupting page rendering.
+    }
+  }, [location.hash]);
 
   return (
     <>
@@ -36,7 +49,9 @@ export function WorkPage() {
         </div>
         {visibleProjects.length > 0 ? (
           <div className="project-grid work-grid">
-            {visibleProjects.map((project) => <ProjectCard key={project.id} project={project} />)}
+            {visibleProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} showOutlineLink={false} />
+            ))}
           </div>
         ) : (
           <p className="empty-state">No AI-specific project is published yet. Ask Branden will appear here when its evaluated retrieval workflow is ready.</p>

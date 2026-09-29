@@ -32,6 +32,24 @@ describe("ContactForm", () => {
     expect(mocks.submitContact).not.toHaveBeenCalled();
   });
 
+  it("clears a resolved security-check validation error", async () => {
+    const user = userEvent.setup();
+    render(<ContactForm />);
+
+    await user.type(screen.getByLabelText(/Name/), "Recruiter Name");
+    await user.type(screen.getByLabelText(/Email/), "recruiter@example.com");
+    await user.type(screen.getByLabelText(/Company/), "Example Company");
+    await user.type(screen.getByLabelText(/Position/), "Data Engineer");
+    await user.type(screen.getByLabelText(/Message/), "I would like to discuss this role with you.");
+    await user.click(screen.getByRole("button", { name: "Send message" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("security check");
+    await user.click(screen.getByRole("button", { name: "Complete security check" }));
+
+    await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
+    expect(screen.queryByText("Complete the security check before sending.")).not.toBeInTheDocument();
+  });
+
   it("submits all required fields and reports confirmation", async () => {
     mocks.submitContact.mockResolvedValueOnce({
       ok: true,

@@ -1,7 +1,7 @@
 import axe from "axe-core";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { App } from "./App";
 
 vi.mock("@calcom/embed-react", () => ({
@@ -11,6 +11,16 @@ vi.mock("@calcom/embed-react", () => ({
 function renderRoute(path: string) {
   return render(<MemoryRouter initialEntries={[path]}><App /></MemoryRouter>);
 }
+
+const scrollIntoView = vi.fn();
+
+beforeEach(() => {
+  scrollIntoView.mockClear();
+  Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
+    configurable: true,
+    value: scrollIntoView,
+  });
+});
 
 describe("portfolio routes", () => {
   it.each([
@@ -37,6 +47,25 @@ describe("portfolio routes", () => {
     renderRoute("/ask");
     expect(await screen.findByText("Assistant not configured")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ask Branden" })).toBeDisabled();
+  });
+
+  it("links home project summaries to hash targets without self-links on Work", async () => {
+    const { unmount } = renderRoute("/");
+    const outlineLinks = await screen.findAllByRole("link", { name: /View project outline/ });
+    expect(outlineLinks).toHaveLength(3);
+    expect(outlineLinks[0]).toHaveAttribute("href", "/work#job-search-intelligence");
+    unmount();
+
+    renderRoute("/work");
+    await screen.findByRole("heading", { name: "Tools shaped around real decisions" });
+    expect(screen.queryByRole("link", { name: /View project outline/ })).not.toBeInTheDocument();
+  });
+
+  it("scrolls a hash-targeted project into view", async () => {
+    renderRoute("/work#job-search-intelligence");
+    await screen.findByRole("heading", { name: "Tools shaped around real decisions" });
+
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" }));
   });
 
   it("exposes the PDF download and the public portfolio source", async () => {

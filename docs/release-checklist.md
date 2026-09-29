@@ -19,7 +19,7 @@ Use this checklist for a reviewed preview and again before a production release.
 
 ## Content and links
 
-- [ ] About and digital rÃ©sumÃ© facts match the approved rÃ©sumÃ© and design source.
+- [ ] About and digital résumé facts match the approved résumé and design source.
 - [ ] GitHub profile, portfolio source, LinkedIn, email, PDF, and Cal.com destinations are correct.
 - [ ] Project cards still say `Prototype - in development` and do not imply shipped outcomes.
 - [ ] Ask Branden still says it is not configured and cannot accept a prompt.

@@ -4,9 +4,10 @@ import type { ProjectSummary } from "@portfolio/shared";
 
 interface ProjectCardProps {
   project: ProjectSummary;
+  showOutlineLink?: boolean;
 }
 
-export function ProjectCard({ project }: ProjectCardProps) {
+export function ProjectCard({ project, showOutlineLink = true }: ProjectCardProps) {
   return (
     <article className={`project-card accent-${project.accent}`} id={project.id}>
       <div className="project-meta">
@@ -28,9 +29,11 @@ export function ProjectCard({ project }: ProjectCardProps) {
       <ul className="technology-list" aria-label="Technologies">
         {project.technologies.map((technology) => <li key={technology}>{technology}</li>)}
       </ul>
-      <Link className="project-link" to={`/work#${project.id}`}>
-        View project outline <ArrowUpRight aria-hidden="true" size={17} />
-      </Link>
+      {showOutlineLink ? (
+        <Link className="project-link" to={`/work#${project.id}`}>
+          View project outline <ArrowUpRight aria-hidden="true" size={17} />
+        </Link>
+      ) : null}
     </article>
   );
 }

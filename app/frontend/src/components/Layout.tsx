@@ -9,7 +9,7 @@ export function Layout() {
   const initialRenderRef = useRef(true);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" });
+    if (!location.hash) window.scrollTo({ top: 0, behavior: "instant" });
 
     const routeMeta: Record<string, { title: string; description: string }> = {
       "/": {
@@ -42,8 +42,8 @@ export function Layout() {
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", meta.description);
 
     if (initialRenderRef.current) initialRenderRef.current = false;
-    else mainRef.current?.focus();
-  }, [location.pathname]);
+    else mainRef.current?.focus({ preventScroll: true });
+  }, [location.hash, location.pathname]);
 
   return (
     <div className="site-shell">

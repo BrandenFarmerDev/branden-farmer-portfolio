@@ -74,7 +74,9 @@ export function Header() {
               {label}
             </NavLink>
           ))}
-          <NavLink className="ask-link" to="/ask">Ask Branden</NavLink>
+          <NavLink className={({ isActive }) => isActive ? "ask-link active" : "ask-link"} to="/ask">
+            Ask Branden
+          </NavLink>
           <a
             className="header-github-link"
             href={siteContent.links.github.href}

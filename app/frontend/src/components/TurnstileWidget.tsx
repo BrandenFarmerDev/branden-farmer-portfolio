@@ -16,35 +16,52 @@ function loadTurnstile(): Promise<void> {
   if (window.turnstile) return Promise.resolve();
   if (scriptPromise) return scriptPromise;
 
-  scriptPromise = new Promise((resolve, reject) => {
-    const existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
-    const script = existing ?? document.createElement("script");
+  let existing = document.getElementById(TURNSTILE_SCRIPT_ID) as HTMLScriptElement | null;
+  if (existing && existing.dataset.loadState !== "loading") {
+    existing.remove();
+    existing = null;
+  }
 
-    const handleLoad = () => {
-      if (window.turnstile) resolve();
-      else {
-        scriptPromise = undefined;
-        reject(new Error("Turnstile API unavailable"));
-      }
+  const script = existing ?? document.createElement("script");
+  const pending = new Promise<void>((resolve, reject) => {
+    const cleanupListeners = () => {
+      script.removeEventListener("load", handleLoad);
+      script.removeEventListener("error", handleError);
     };
-    const handleError = () => {
+    const fail = (message: string) => {
+      cleanupListeners();
+      script.remove();
       scriptPromise = undefined;
-      reject(new Error("Turnstile failed to load"));
+      reject(new Error(message));
     };
+    const handleLoad = () => {
+      if (!window.turnstile) {
+        fail("Turnstile API unavailable");
+        return;
+      }
+
+      cleanupListeners();
+      script.dataset.loadState = "loaded";
+      scriptPromise = undefined;
+      resolve();
+    };
+    const handleError = () => fail("Turnstile failed to load");
 
     script.addEventListener("load", handleLoad, { once: true });
     script.addEventListener("error", handleError, { once: true });
-
-    if (!existing) {
-      script.id = TURNSTILE_SCRIPT_ID;
-      script.src = TURNSTILE_SCRIPT_URL;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
   });
 
-  return scriptPromise;
+  scriptPromise = pending;
+  if (!existing) {
+    script.id = TURNSTILE_SCRIPT_ID;
+    script.src = TURNSTILE_SCRIPT_URL;
+    script.async = true;
+    script.defer = true;
+    script.dataset.loadState = "loading";
+    document.head.appendChild(script);
+  }
+
+  return pending;
 }
 
 export function TurnstileWidget({ siteKey, resetKey, onToken, onError }: TurnstileWidgetProps) {

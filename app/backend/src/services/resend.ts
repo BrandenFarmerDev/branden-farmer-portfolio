@@ -65,9 +65,10 @@ export async function deliverContact(contact: ContactRequest, env: Env): Promise
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
+  let notificationSent = false;
 
   try {
-    const notificationSent = await sendEmail(apiKey,
+    notificationSent = await sendEmail(apiKey,
       `portfolio-contact/${contact.submissionId}`, {
         from: fromEmail,
         to: [toEmail],
@@ -88,7 +89,9 @@ export async function deliverContact(contact: ContactRequest, env: Env): Promise
 
     return { success: true, confirmationSent };
   } catch {
-    return { success: false, reason: "failed" };
+    return notificationSent
+      ? { success: true, confirmationSent: false }
+      : { success: false, reason: "failed" };
   } finally {
     clearTimeout(timeout);
   }

@@ -5,6 +5,7 @@ import { TurnstileWidget } from "./TurnstileWidget";
 describe("TurnstileWidget", () => {
   afterEach(() => {
     delete window.turnstile;
+    document.getElementById("cloudflare-turnstile-script")?.remove();
   });
 
   it("renders a bounded contact action and removes the widget on cleanup", async () => {
@@ -58,5 +59,27 @@ describe("TurnstileWidget", () => {
 
     await waitFor(() => expect(renderWidget).toHaveBeenCalled());
     expect(onError).not.toHaveBeenCalled();
+  });
+
+  it("removes a failed script so a reset can retry loading", async () => {
+    const onError = vi.fn();
+    const { rerender } = render(
+      <TurnstileWidget siteKey="site-key" resetKey={1} onToken={vi.fn()} onError={onError} />,
+    );
+    const failedScript = document.getElementById("cloudflare-turnstile-script") as HTMLScriptElement;
+
+    fireEvent.error(failedScript);
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(expect.stringContaining("could not load")));
+    expect(document.getElementById("cloudflare-turnstile-script")).not.toBeInTheDocument();
+
+    rerender(<TurnstileWidget siteKey="site-key" resetKey={2} onToken={vi.fn()} onError={onError} />);
+    const replacementScript = document.getElementById("cloudflare-turnstile-script") as HTMLScriptElement;
+    expect(replacementScript).not.toBe(failedScript);
+
+    const renderWidget = vi.fn().mockReturnValue("widget-retry");
+    window.turnstile = { render: renderWidget, remove: vi.fn() };
+    fireEvent.load(replacementScript);
+
+    await waitFor(() => expect(renderWidget).toHaveBeenCalled());
   });
 });
