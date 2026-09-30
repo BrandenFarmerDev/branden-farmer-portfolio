@@ -29,7 +29,8 @@ describe("portfolio routes", () => {
     ["/about", "Technical depth with an operations point of view"],
     ["/resume", "Experience across operations, data, and development"],
     ["/contact", "Start with the channel that works for you"],
-    ["/ask", "Evidence first, assistant later"],
+    ["/ask", "Questions answered from approved evidence"],
+    ["/privacy", "What this site keeps, and for how long"],
   ])("renders %s", async (path, heading) => {
     renderRoute(path);
     expect(await screen.findByRole("heading", { name: heading })).toBeInTheDocument();
@@ -39,14 +40,15 @@ describe("portfolio routes", () => {
     );
   });
 
-  it("keeps unfinished work and Ask Branden explicitly unavailable", async () => {
+  it("keeps unfinished work labelled and keeps owner tools out of navigation", async () => {
     const { unmount } = renderRoute("/work");
     expect(await screen.findAllByText("Prototype - in development")).toHaveLength(3);
+    expect(screen.queryByRole("link", { name: /Owner/ })).not.toBeInTheDocument();
     unmount();
 
     renderRoute("/ask");
-    expect(await screen.findByText("Assistant not configured")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Ask Branden" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Ask Branden" })).toHaveAttribute("type", "submit");
+    expect(screen.getByRole("link", { name: "Contact Branden or book time" })).toHaveAttribute("href", "/contact");
   });
 
   it("links home project summaries to hash targets without self-links on Work", async () => {

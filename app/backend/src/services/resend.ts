@@ -57,7 +57,7 @@ async function sendEmail(
   return response.ok;
 }
 
-export async function deliverContact(contact: ContactRequest, env: Env): Promise<DeliveryResult> {
+export async function deliverContact(contact: ContactRequest, env: Env, ownerAlreadySent = false): Promise<DeliveryResult> {
   const { RESEND_API_KEY: apiKey, CONTACT_FROM_EMAIL: fromEmail, CONTACT_TO_EMAIL: toEmail } = env;
   if (!apiKey || !fromEmail || !toEmail) {
     return { success: false, reason: "unavailable" };
@@ -65,10 +65,10 @@ export async function deliverContact(contact: ContactRequest, env: Env): Promise
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12_000);
-  let notificationSent = false;
+  let notificationSent = ownerAlreadySent;
 
   try {
-    notificationSent = await sendEmail(apiKey,
+    if (!notificationSent) notificationSent = await sendEmail(apiKey,
       `portfolio-contact/${contact.submissionId}`, {
         from: fromEmail,
         to: [toEmail],

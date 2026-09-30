@@ -1394,6 +1394,125 @@ h3 {
   font-size: 0.85rem;
 }
 
+.ask-modes,
+.ask-suggestions,
+.owner-toolbar,
+.owner-row-heading,
+.owner-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.ask-form,
+.owner-booking-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ask-form textarea {
+  color: var(--ink);
+}
+
+.text-button {
+  display: inline-flex;
+  padding: 4px 0;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.text-button:hover {
+  text-decoration: underline;
+}
+
+.ask-result {
+  padding: 20px;
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.ask-result h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.ask-result h3 {
+  margin: 18px 0 6px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+.ask-result-message,
+.ask-remaining,
+.ask-contact,
+.rag-note {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.privacy-list {
+  display: grid;
+  gap: 28px;
+  max-width: 760px;
+}
+
+.privacy-list h2 {
+  margin-bottom: 8px;
+  font-size: 1.3rem;
+}
+
+.owner-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.owner-toolbar {
+  align-items: end;
+}
+
+.owner-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  gap: 12px;
+  list-style: none;
+}
+
+.owner-list li,
+.owner-booking-form {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.owner-row-heading span,
+.owner-row-actions span {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+
+.owner-list p {
+  white-space: pre-wrap;
+}
+
+.owner-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+}
+
 .site-footer {
   padding-block: 38px;
   border-top: 1px solid var(--line);

@@ -1,0 +1,50 @@
+{
+  "description": "Ask Branden evaluation set. Supported questions and job descriptions must retrieve at least one expected source. Unsupported claims must be declined or listed as gaps by the model during preview evaluation.",
+  "supported": [
+    { "question": "What kinds of applications has Branden built?", "expected": ["area-automation-and-applications", "resume-project-palantir-foundry-operational-applications", "role-business-intelligence-developer-iii-1", "role-business-intelligence-developer-iii-2"] },
+    { "question": "What experience does Branden have with Power BI?", "expected": ["skills-business-intelligence", "role-business-intelligence-developer-iii-1"] },
+    { "question": "Has he used Palantir Foundry?", "expected": ["resume-project-palantir-foundry-operational-applications", "skills-platforms-delivery", "role-business-intelligence-developer-iii-1"] },
+    { "question": "Which databases has he worked with?", "expected": ["skills-data-engineering-databases", "resume-project-enterprise-data-integration"] },
+    { "question": "Does he know Python?", "expected": ["skills-development-automation", "role-business-intelligence-developer-iii-2", "role-business-intelligence-developer-iii-3"] },
+    { "question": "What is his education?", "expected": ["education"] },
+    { "question": "What certifications does he hold?", "expected": ["training"] },
+    { "question": "Has he led a team?", "expected": ["role-planning-supervisor-1", "career-planning-and-team-leadership", "role-lead-production-technician-1"] },
+    { "question": "What did he do as a production planner?", "expected": ["role-production-planner-1", "career-planning-and-team-leadership"] },
+    { "question": "How did Branden move from manufacturing into software development?", "expected": ["career-manufacturing-foundation", "career-business-intelligence-and-application-development", "resume-summary"] },
+    { "question": "What ETL or data integration work has he done?", "expected": ["resume-project-enterprise-data-integration", "role-business-intelligence-developer-iii-1", "skills-data-engineering-databases"] },
+    { "question": "Does he have SharePoint Framework experience?", "expected": ["skills-development-automation", "role-business-intelligence-developer-iii-2"] },
+    { "question": "What awards has he received?", "expected": ["recognition"] },
+    { "question": "What roles is he looking for?", "expected": ["about-overview"] },
+    { "question": "What is the Job Search Intelligence project?", "expected": ["project-job-search-intelligence"] },
+    { "question": "Is the municipal capital project tracker finished?", "expected": ["project-municipal-capital-project-tracker"] },
+    { "question": "How does Branden approach building software?", "expected": ["working-principles", "about-overview"] },
+    { "question": "Does he have Lean Six Sigma training?", "expected": ["training", "skills-business-capabilities"] },
+    { "question": "What Azure experience does he have?", "expected": ["skills-platforms-delivery", "resume-project-secure-application-and-analytics-architecture"] },
+    { "question": "Where is Branden based?", "expected": ["resume-summary"] },
+    { "question": "What did he do at Server Technology?", "expected": ["role-assembly-technician-1"] }
+  ],
+  "unsupported": [
+    "Does Branden have a PhD?",
+    "Does he hold an active security clearance?",
+    "Is he a certified AWS Solutions Architect?",
+    "How many years of Kubernetes experience does he have?",
+    "What salary does he expect?",
+    "Did he manage a team of 50 engineers?",
+    "Has Job Search Intelligence launched to paying customers?",
+    "Is he fluent in Spanish?",
+    "Has he already graduated from WGU?",
+    "Can he start next Monday?"
+  ],
+  "jobDescriptions": [
+    { "text": "Business Intelligence Developer. Build Power BI dashboards, DAX measures, and semantic models. Strong SQL Server skills. Gather stakeholder requirements. Tableau experience preferred.", "expected": ["skills-business-intelligence", "role-business-intelligence-developer-iii-1"], "expectedGaps": ["Tableau"] },
+    { "text": "Data Engineer. Design ETL/ELT pipelines in Python and SQL, integrate REST APIs, PostgreSQL on AWS, data quality controls. Experience with Snowflake and Airflow required.", "expected": ["resume-project-enterprise-data-integration", "skills-data-engineering-databases"], "expectedGaps": ["Snowflake", "Airflow"] },
+    { "text": "Palantir Foundry Developer. Build Workshop applications, Ontology objects, Actions, and AIP workflows for operational decisions. Active security clearance required.", "expected": ["resume-project-palantir-foundry-operational-applications", "skills-platforms-delivery"], "expectedGaps": ["security clearance"] },
+    { "text": "Power Platform Developer. Build Power Apps canvas apps, Power Automate flows, SharePoint Online solutions, and PCF controls in TypeScript. Dataverse administration experience preferred.", "expected": ["skills-development-automation", "role-business-intelligence-developer-iii-2"], "expectedGaps": ["Dataverse"] },
+    { "text": "Full Stack Developer. React, TypeScript, Node.js, REST APIs, Git and CI/CD. Five years of professional Kubernetes and Go experience required.", "expected": ["skills-development-automation", "skills-platforms-delivery"], "expectedGaps": ["Kubernetes", "Go"] },
+    { "text": "Production Planning Analyst. Manage production schedules, material constraints, capacity planning, and on-time delivery KPIs using SQL and Excel. SAP PP experience required.", "expected": ["role-production-planner-1", "role-planning-supervisor-1", "area-operations-and-planning"], "expectedGaps": ["SAP"] },
+    { "text": "Operations Analyst. Map business processes, define KPIs, lead continuous improvement with Lean Six Sigma, and present findings to leaders. Black Belt certification preferred.", "expected": ["skills-business-capabilities", "training", "area-operations-and-planning"], "expectedGaps": ["Black Belt"] },
+    { "text": "Automation Engineer. Automate reporting and reconciliation with Python, schedule processing, RPA bots, and Excel VBA. UiPath certification preferred.", "expected": ["role-business-intelligence-developer-iii-3", "skills-development-automation"], "expectedGaps": ["UiPath"] },
+    { "text": "Cloud Application Developer. Azure Functions, Azure SQL, API Management, Key Vault, Application Insights, Entra ID and OAuth. Microsoft Azure certification required.", "expected": ["resume-project-secure-application-and-analytics-architecture", "skills-platforms-delivery"], "expectedGaps": ["Azure certification"] },
+    { "text": "Analytics Team Lead. Lead analysts, set reporting standards, partner with IT and cybersecurity, and deliver governed executive dashboards. Budget ownership of more than one million dollars required.", "expected": ["role-business-intelligence-developer-iii-3", "role-planning-supervisor-1", "skills-business-intelligence"], "expectedGaps": ["budget"] }
+  ]
+}

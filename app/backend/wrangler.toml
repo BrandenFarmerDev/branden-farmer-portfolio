@@ -2,11 +2,27 @@ name = "branden-farmer-portfolio-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-27"
 
+# Daily contact-delivery retries and retention cleanup.
+[triggers]
+crons = ["0 7 * * *"]
+
+[ai]
+binding = "AI"
+
 [vars]
 ALLOWED_ORIGIN = "http://localhost:5173"
 TURNSTILE_EXPECTED_HOSTNAME = "localhost"
 CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
 CONTACT_TO_EMAIL = "branden_farmer@live.com"
+AI_ENABLED = "false"
+AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
+OWNER_EMAIL = "branden_farmer@live.com"
+
+[[d1_databases]]
+binding = "PORTFOLIO_DB"
+database_name = "portfolio-local"
+database_id = "00000000-0000-0000-0000-000000000001"
+migrations_dir = "migrations"
 
 [[ratelimits]]
 name = "CONTACT_RATE_LIMITER"
@@ -16,18 +32,86 @@ namespace_id = "1001"
 limit = 5
 period = 60
 
+[[ratelimits]]
+name = "ASK_RATE_LIMITER"
+namespace_id = "1003"
+
+[ratelimits.simple]
+limit = 3
+period = 60
+
+# Isolated preview: separate D1, secrets, rate-limit namespaces, and a sandbox email recipient.
+[env.preview]
+name = "branden-farmer-portfolio-api-preview"
+
+[env.preview.ai]
+binding = "AI"
+
+[env.preview.vars]
+ALLOWED_ORIGIN = "https://preview.brandenfarmer.com"
+TURNSTILE_EXPECTED_HOSTNAME = "preview.brandenfarmer.com"
+CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
+CONTACT_TO_EMAIL = "delivered@resend.dev"
+AI_ENABLED = "false"
+AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
+OWNER_EMAIL = "branden_farmer@live.com"
+CAL_EVENT_TYPE_ID = "7260011"
+ACCESS_TEAM_DOMAIN = "cold-union-464d.cloudflareaccess.com"
+ACCESS_AUD = "14fecc1ea27133e0e949f3ed09435cc162fd35f6e44881942148b97dde024f9b"
+
+[[env.preview.routes]]
+pattern = "api-preview.brandenfarmer.com"
+custom_domain = true
+
+[[env.preview.d1_databases]]
+binding = "PORTFOLIO_DB"
+database_name = "branden-farmer-portfolio-preview"
+database_id = "473cb47c-2859-4adc-b19b-ddc5f7708c35"
+migrations_dir = "migrations"
+
+[[env.preview.ratelimits]]
+name = "CONTACT_RATE_LIMITER"
+namespace_id = "1005"
+
+[env.preview.ratelimits.simple]
+limit = 5
+period = 60
+
+[[env.preview.ratelimits]]
+name = "ASK_RATE_LIMITER"
+namespace_id = "1006"
+
+[env.preview.ratelimits.simple]
+limit = 3
+period = 60
+
 [env.production]
 name = "branden-farmer-portfolio-api"
+
+[env.production.ai]
+binding = "AI"
 
 [env.production.vars]
 ALLOWED_ORIGIN = "https://brandenfarmer.com"
 TURNSTILE_EXPECTED_HOSTNAME = "brandenfarmer.com"
 CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
 CONTACT_TO_EMAIL = "branden_farmer@live.com"
+AI_ENABLED = "false"
+AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
+OWNER_EMAIL = "branden_farmer@live.com"
+CAL_EVENT_TYPE_ID = "7260011"
+ACCESS_TEAM_DOMAIN = "REPLACE_WITH_PRODUCTION_ACCESS_TEAM_DOMAIN"
+ACCESS_AUD = "REPLACE_WITH_PRODUCTION_ACCESS_AUD"
 
 [[env.production.routes]]
 pattern = "api.brandenfarmer.com"
 custom_domain = true
+
+[[env.production.d1_databases]]
+binding = "PORTFOLIO_DB"
+database_name = "branden-farmer-portfolio-production"
+database_id = "884d99b9-b2bb-4569-88eb-bed75cd5c568"
+migrations_dir = "migrations"
 
 [[env.production.ratelimits]]
 name = "CONTACT_RATE_LIMITER"
@@ -35,4 +119,12 @@ namespace_id = "1002"
 
 [env.production.ratelimits.simple]
 limit = 5
+period = 60
+
+[[env.production.ratelimits]]
+name = "ASK_RATE_LIMITER"
+namespace_id = "1004"
+
+[env.production.ratelimits.simple]
+limit = 3
 period = 60

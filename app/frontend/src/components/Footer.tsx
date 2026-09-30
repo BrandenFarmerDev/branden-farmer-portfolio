@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { ApiStatus } from "./ApiStatus";
 import { LinkOrPlaceholder } from "./LinkOrPlaceholder";
 import { siteContent } from "../content/site";
@@ -14,6 +15,7 @@ export function Footer() {
           <LinkOrPlaceholder link={siteContent.links.github} />
           <LinkOrPlaceholder link={siteContent.links.linkedin} />
           <LinkOrPlaceholder link={siteContent.links.email} />
+          <Link to="/privacy">Privacy</Link>
         </nav>
         <ApiStatus />
       </div>

@@ -34,7 +34,7 @@ npm run dev:backend
 npm run quality
 ```
 
-`npm run quality` runs linting, coverage-enforced tests, maintained-code duplication detection, TypeScript checks, production builds, and a production-dependency audit. The current coverage floors are 85% for lines, statements, and functions and 80% for branches. The backend build uses Wrangler's dry-run mode and does not deploy anything.
+`npm run quality` runs linting, coverage-enforced tests, maintained-code duplication detection, TypeScript checks, production builds, and a production-dependency audit. The current coverage floor is 85% for lines, statements, functions, and branches. The backend build uses Wrangler's dry-run mode and does not deploy anything.
 
 Individual commands are also available:
 

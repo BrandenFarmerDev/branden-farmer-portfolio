@@ -1,6 +1,9 @@
 import { askRoute } from "./routes/ask";
+import { calWebhookRoute } from "./routes/cal-webhook";
 import { contactRoute } from "./routes/contact";
 import { healthRoute } from "./routes/health";
+import { ownerRoute } from "./routes/owner";
+import { runMaintenance } from "./services/maintenance";
 import type { Env } from "./types";
 
 function isAllowedOrigin(request: Request, env: Env): boolean {
@@ -15,9 +18,10 @@ function addResponseHeaders(response: Response, request: Request, env: Env, requ
 
   if (origin === allowedOrigin) {
     headers.set("Access-Control-Allow-Origin", allowedOrigin);
+    headers.set("Access-Control-Allow-Credentials", "true");
     headers.set("Vary", "Origin");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
-    headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   }
 
   headers.set("X-Content-Type-Options", "nosniff");
@@ -60,16 +64,19 @@ export default {
     try {
       if (pathname === "/api/health") {
         response = request.method === "GET" ? healthRoute() : methodNotAllowed("GET");
-      } else if (pathname === "/api/contact") {
+      } else if (pathname === "/api/contact" || pathname === "/api/ask") {
         if (request.method !== "POST") response = methodNotAllowed("POST");
         else if (!isAllowedOrigin(request, env)) {
           response = Response.json(
             { error: "origin_forbidden", message: "This origin is not allowed." },
             { status: 403 },
           );
-        } else response = await contactRoute(request, env);
-      } else if (pathname === "/api/ask") {
-        response = request.method === "POST" ? askRoute() : methodNotAllowed("POST");
+        } else response = pathname === "/api/ask" ? await askRoute(request, env) : await contactRoute(request, env);
+      } else if (pathname === "/api/webhooks/cal") {
+        response = request.method === "POST" ? await calWebhookRoute(request, env) : methodNotAllowed("POST");
+      } else if (pathname.startsWith("/api/owner/")) {
+        response = await ownerRoute(request, env, pathname);
+        response.headers.set("X-Robots-Tag", "noindex");
       } else {
         response = Response.json(
           { error: "not_found", message: "The requested API route does not exist." },
@@ -87,5 +94,10 @@ export default {
     const finalResponse = addResponseHeaders(response, request, env, requestId);
     console.info(JSON.stringify({ event: "request_complete", requestId, method: request.method, path: pathname, status: finalResponse.status, durationMs: Date.now() - startedAt }));
     return finalResponse;
+  },
+  scheduled(_event, env, ctx): void {
+    ctx.waitUntil(runMaintenance(env).catch(() => {
+      console.error(JSON.stringify({ event: "maintenance_error" }));
+    }));
   },
 } satisfies ExportedHandler<Env>;

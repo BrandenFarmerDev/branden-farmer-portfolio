@@ -6,6 +6,7 @@ const TURNSTILE_SCRIPT_URL = "https://challenges.cloudflare.com/turnstile/v0/api
 interface TurnstileWidgetProps {
   siteKey: string;
   resetKey: number;
+  action?: "contact_form" | "ask_branden";
   onToken: (token: string) => void;
   onError: (message: string) => void;
 }
@@ -64,7 +65,7 @@ function loadTurnstile(): Promise<void> {
   return pending;
 }
 
-export function TurnstileWidget({ siteKey, resetKey, onToken, onError }: TurnstileWidgetProps) {
+export function TurnstileWidget({ siteKey, resetKey, action = "contact_form", onToken, onError }: TurnstileWidgetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const callbacksRef = useRef({ onToken, onError });
 
@@ -87,7 +88,7 @@ export function TurnstileWidget({ siteKey, resetKey, onToken, onError }: Turnsti
 
       widgetId = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
-        action: "contact_form",
+        action,
         theme: "auto",
         size: "flexible",
         callback: (token) => callbacksRef.current.onToken(token),
@@ -113,7 +114,7 @@ export function TurnstileWidget({ siteKey, resetKey, onToken, onError }: Turnsti
       active = false;
       if (widgetId && window.turnstile) window.turnstile.remove(widgetId);
     };
-  }, [siteKey, resetKey]);
+  }, [siteKey, resetKey, action]);
 
   return (
     <div className="turnstile-shell">
