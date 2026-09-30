@@ -100,8 +100,8 @@ AI_ENABLED = "false"
 AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
 OWNER_EMAIL = "branden_farmer@live.com"
 CAL_EVENT_TYPE_ID = "7260011"
-ACCESS_TEAM_DOMAIN = "REPLACE_WITH_PRODUCTION_ACCESS_TEAM_DOMAIN"
-ACCESS_AUD = "REPLACE_WITH_PRODUCTION_ACCESS_AUD"
+ACCESS_TEAM_DOMAIN = "cold-union-464d.cloudflareaccess.com"
+ACCESS_AUD = "8dca71ab16ffff43fbb436291bae7b9756a4495a5e631c39ebea4226320df564"
 
 [[env.production.routes]]
 pattern = "api.brandenfarmer.com"
