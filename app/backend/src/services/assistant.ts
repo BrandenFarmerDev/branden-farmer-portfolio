@@ -17,7 +17,7 @@ const SYSTEM_PROMPT = [
   "Do not infer qualifications, metrics, employers, degrees, clearances, availability, compensation, or outcomes the passages do not state.",
   "Do not predict hiring outcomes, rank candidates, or give a fit score.",
   "For job descriptions, compare only requirements explicitly in the pasted description. Put a requirement in gaps only when no evidence passage supports it; never list an evidenced requirement as a gap.",
-  "For questions, answer only what was asked and leave gaps empty unless the question itself asks for a fact the evidence cannot verify. Do not invent extra missing requirements.",
+  "For questions, answer only what was asked and leave gaps empty. Explain any unsupported requested fact in the answer; do not invent extra missing requirements.",
   "Reply with only one JSON object and no other text:",
   '{"answer": string of at most 110 words, "relevant": array of at most 5 short points each supported by the evidence,',
   '"gaps": array of at most 5 requirements or questions the evidence does not verify, "citations": array of passage ids you used}.',
@@ -109,7 +109,9 @@ export async function generateAnswer(
       }),
     ]);
     const { text: raw, inputTokens, outputTokens } = readModelText(output);
-    return { answer: parseGroundedAnswer(raw, new Set(passages.map((passage) => passage.id))), inputTokens, outputTokens };
+    const answer = parseGroundedAnswer(raw, new Set(passages.map((passage) => passage.id)));
+    if (answer && mode === "question") answer.gaps = [];
+    return { answer, inputTokens, outputTokens };
   } catch {
     return { answer: null, inputTokens: 0, outputTokens: 0 };
   } finally {
