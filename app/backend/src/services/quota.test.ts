@@ -32,7 +32,8 @@ describe("visitor identity", () => {
     const second = await resolveVisitor(request(`other=1; ${cookie}`), secret, day);
     expect(second).toMatchObject({ browserKey: first.browserKey, setCookie: undefined });
 
-    const tampered = await resolveVisitor(request(`${cookie.slice(0, -1)}0`), secret, day);
+    const replacement = cookie.endsWith("0") ? "1" : "0";
+    const tampered = await resolveVisitor(request(`${cookie.slice(0, -1)}${replacement}`), secret, day);
     expect(tampered.browserKey).not.toBe(first.browserKey);
     expect(tampered.setCookie).toBeDefined();
   });
