@@ -36,18 +36,19 @@ describe("model generation", () => {
     expect(result).toMatchObject({ inputTokens: 900, outputTokens: 120, answer: { citations: ["skills-bi"] } });
     expect(input.max_tokens).toBe(280);
     expect(input.messages[0].content).toContain("never list an evidenced requirement as a gap");
-    expect(input.messages[0].content).toContain("Do not invent extra missing requirements");
+    expect(input.messages[0].content).toContain("do not invent extra missing requirements");
     expect(input.messages[1].content).toContain("/no_think");
     expect(input.messages[1].content).not.toContain('"""\nNeeds Power BI. """');
 
     const chat = aiReturning({ choices: [{ message: { content: valid } }] });
-    expect((await generateAnswer(chat.ai, "@cf/meta/llama-3.2-3b-instruct", "question", "Power BI?", passages)).answer).not.toBeNull();
+    expect((await generateAnswer(chat.ai, "@cf/meta/llama-3.2-3b-instruct", "question", "Power BI?", passages)).answer).toMatchObject({ gaps: [] });
     expect((chat.run.mock.calls[0][1] as { messages: Array<{ content: string }> }).messages[1].content).not.toContain("/no_think");
 
     const structured = aiReturning({ response: JSON.parse(valid), usage: { prompt_tokens: 75, completion_tokens: 30 } });
     expect(await generateAnswer(structured.ai, DEFAULT_MODEL, "question", "Power BI?", passages)).toMatchObject({
-      answer: { citations: ["skills-bi"] }, inputTokens: 75, outputTokens: 30,
+      answer: { citations: ["skills-bi"], gaps: [] }, inputTokens: 75, outputTokens: 30,
     });
+    expect(result.answer?.gaps).toEqual(["Tableau"]);
   });
 
   it("keeps long job descriptions within the prompt budget", async () => {

@@ -9,7 +9,7 @@ import { submitAsk } from "../lib/api";
 const stages = [
   { icon: BookOpen, title: "Approved sources", text: "Only the published résumé, About, and Work content is searched. Private messages and bookings are never used." },
   { icon: Search, title: "Evidence retrieval", text: "Matching passages are found first. If nothing matches, no answer is generated." },
-  { icon: ShieldCheck, title: "Bounded answers", text: "Answers must cite the retrieved passages. Unsupported qualifications are listed as gaps, and no hiring prediction is made." },
+  { icon: ShieldCheck, title: "Bounded answers", text: "Answers must cite the retrieved passages. For job descriptions, unsupported requirements are listed as gaps. No hiring prediction is made." },
 ];
 
 const modes: Record<AskMode, { label: string; field: string; min: number; max: number; placeholder: string }> = {
