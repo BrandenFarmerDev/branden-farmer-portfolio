@@ -15,7 +15,7 @@ The production job performs this sequence:
 7. Upload `app/frontend/dist` to Cloudflare Pages.
 8. Verify both the immutable Pages deployment URL and `https://brandenfarmer.com`.
 
-Migrations must be additive (expand, then contract in a later release) because they run before the new Worker is live. Deployment never turns generated answers on: `AI_ENABLED` stays `"false"` in `wrangler.toml` until the owner deliberately changes it after preview evaluation.
+Migrations must be additive (expand, then contract in a later release) because they run before the new Worker is live. `AI_ENABLED` is versioned in `wrangler.toml`; the owner setting in D1 can pause generated answers without a deployment. Evidence-only responses remain available when generation is paused or fails.
 
 The production job does not run on pull requests or `bfarmer/**` branches. The separate, manually dispatched preview job uses its own GitHub `preview` environment and credentials.
 
@@ -48,12 +48,13 @@ The production Worker configuration is versioned in `app/backend/wrangler.toml`:
 
 The production Worker already exists according to the handoff. Do not redeploy the unfinished feature branch to production as a setup step. The production workflow applies migrations, syncs knowledge, and deploys after a reviewed merge, once the configuration below is complete.
 
-The production Worker requires `ASK_SIGNING_SECRET`, `RESEND_API_KEY`, and `TURNSTILE_SECRET_KEY`. Wrangler now rejects a deployment if any of these are absent. Use the commands below only when intentionally adding or replacing them. Wrangler prompts for each value and stores it in Cloudflare; never put a value in GitHub or this repository. `wrangler secret put` creates a new deployed version of the remote Worker, so this is a live configuration change, not a read-only check.
+The production Worker requires `ASK_SIGNING_SECRET`, `CAL_WEBHOOK_SECRET`, `RESEND_API_KEY`, and `TURNSTILE_SECRET_KEY`. Wrangler rejects a deployment if any are absent. Use the commands below only when intentionally adding or replacing them. Wrangler prompts for each value and stores it in Cloudflare; never put a value in GitHub or this repository. `wrangler secret put` creates a new deployed version of the remote Worker, so this is a live configuration change, not a read-only check.
 
 ```powershell
 npx.cmd wrangler secret put RESEND_API_KEY --env production --config app/backend/wrangler.toml
 npx.cmd wrangler secret put TURNSTILE_SECRET_KEY --env production --config app/backend/wrangler.toml
 npx.cmd wrangler secret put ASK_SIGNING_SECRET --env production --config app/backend/wrangler.toml
+npx.cmd wrangler secret put CAL_WEBHOOK_SECRET --env production --config app/backend/wrangler.toml
 ```
 
 Follow the [contact form setup guide](contact-form-setup.md) for Resend DNS and Turnstile configuration.
@@ -94,7 +95,9 @@ npx.cmd wrangler secret put RESEND_API_KEY --env preview --config app/backend/wr
 npx.cmd wrangler secret put TURNSTILE_SECRET_KEY --env preview --config app/backend/wrangler.toml
 ```
 
-Paste each secret only into its prompt. `npx.cmd wrangler secret list --env preview --config app/backend/wrangler.toml` lists names without revealing values. If the preview Worker is missing, complete the preview bootstrap below before these steps. For production, target `branden-farmer-portfolio-api` / `--env production` and use the production values during release preparation; preserve existing Resend and Turnstile secrets. See [Cloudflare's secret storage instructions](https://developers.cloudflare.com/workers/configuration/secrets/).
+Paste each secret only into its prompt. `npx.cmd wrangler secret list --env preview --config app/backend/wrangler.toml` lists names without revealing values. For an entirely new Worker, use `wrangler deploy --secrets-file <ignored-local-file>` to upload all required secrets with its first version; afterward, use `wrangler secret put` for individual updates. For production, target `branden-farmer-portfolio-api` / `--env production` and use the production values during release preparation; preserve existing Resend and Turnstile secrets. See [Cloudflare's secret storage instructions](https://developers.cloudflare.com/workers/configuration/secrets/).
+
+`TURNSTILE_SECRET_KEY` must be the secret key of the widget whose public site key is built into that environment's frontend. If preview and production use the same widget, they must use that widget's same Turnstile secret; do not generate an unrelated random value. Keep the Ask signing and Cal webhook secrets distinct per environment.
 
 Preview sends owner notifications to Resend's `delivered@resend.dev` test inbox. Visitor confirmations still go to the submitted address, so use an address you control for testing.
 
@@ -131,18 +134,18 @@ If the account cannot create webhooks, keep the public booking link and use manu
 
 ### 8. Set up the isolated preview
 
-1. Create preview D1, record its ID, complete the preview Access application, and fill the preview identifiers in `wrangler.toml`. Keep `AI_ENABLED` false. Add `preview.brandenfarmer.com` to the Turnstile widget's allowed hostnames and obtain its site key and matching secret.
+1. Create preview D1, record its ID, complete the preview Access application, and fill the preview identifiers in `wrangler.toml`. Add `preview.brandenfarmer.com` to the Turnstile widget's allowed hostnames and obtain its site key and matching secret.
 2. In GitHub, create a `preview` environment limited to the intended `bfarmer/*` branch, with a required reviewer where supported, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets, and a `VITE_TURNSTILE_SITE_KEY` variable. These are separate environment entries even if the account/token values are reused.
-3. Prepare manual workflow dispatch before promising a **Run workflow** button. At this review, local `main` at `af580ac` lacks `workflow_dispatch`; the feature tree adds it. Arrange a small reviewed CI bootstrap change on `main` before the feature release, preserving the existing production workflow and its push-only production condition. Then push the reviewed feature branch and select it in **Actions → Continuous integration → Run workflow**. GitHub documents the default-branch requirement in [manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow). Do not merge the unfinished feature merely to obtain the button.
-4. The preview workflow applies D1 migrations, syncs knowledge, deploys the preview Worker, and uploads Pages with `--branch=preview`. This creates the remote preview services; a separate local Worker deployment is not a prerequisite. Add the four preview Worker secrets from step 5 after this first bootstrap. Public submissions/Ask fail closed until required secrets exist. Confirm secrets before testing or activating the webhook.
+3. If recreating a missing preview Worker, perform its initial deployment with all four required secrets using `wrangler deploy --env preview --secrets-file <ignored-local-file> --config app/backend/wrangler.toml`. For an existing Worker, confirm the four names with `wrangler secret list` before dispatch. Required-secret validation blocks deployment when any is missing. Then push the reviewed development branch and select it in **Actions → Continuous integration → Run workflow**. GitHub documents the default-branch requirement in [manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
+4. The preview workflow applies D1 migrations, syncs knowledge, deploys the preview Worker, and uploads Pages with `--branch=preview`. Confirm secrets before testing or activating the webhook.
 5. After a successful Pages `preview` deployment exists, open **Workers & Pages → branden-farmer-portfolio → Custom domains → Set up a custom domain**. Add and activate `preview.brandenfarmer.com`. In the `brandenfarmer.com` zone's **DNS → Records**, edit only its `preview` CNAME to target `preview.branden-farmer-portfolio.pages.dev`, with proxy status **Proxied**. Confirm the Pages branch alias in the deployment details if the actual project hostname differs. Merely adding the custom domain can leave it pointing at production. See [Cloudflare's branch-domain instructions](https://developers.cloudflare.com/pages/how-to/custom-branch-aliases/).
 6. Test using `https://preview.brandenfarmer.com`, which matches the configured CORS origin and Turnstile hostname. Follow the Access guide's login/API checks, then test Ask retrieval, contact persistence, Cal events, and retention/retry operations. The first bootstrap is not a completed acceptance test.
 
-This is a documented bootstrap sequence; creating the resources, enabling dispatch on `main`, and running the deployment are separate work. Pull requests never deploy.
+The preview resources and manual workflow dispatch have already been bootstrapped. These steps document recovery or recreation of the environment. Pull requests never deploy.
 
 ### 9. Turn on generated answers
 
-After the preview evaluation passes and the model is chosen, set `AI_ENABLED = "true"` for the environment in `wrangler.toml` through a reviewed pull request. The owner page switch can pause answers at any time without a deployment. Workers Free stops inference when the daily Neuron allowance is used; do not enable paid Workers AI without an explicit monthly budget.
+The approved configuration sets `AI_ENABLED = "true"` for preview and production. Validate generated answers in preview before merging a change that enables production. The owner page switch can pause answers at any time without a deployment. Workers Free stops inference when the daily Neuron allowance is used; do not enable paid Workers AI without an explicit monthly budget.
 
 ## One-time GitHub setup
 

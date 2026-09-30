@@ -175,6 +175,22 @@ jobs:
           echo "::error::Production Ask is not ready (HTTP $status)"
           exit 1
 
+      - name: Verify production Cal webhook configuration
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            status=$(curl --show-error --silent --max-time 20 \
+              --output "$RUNNER_TEMP/cal-smoke.json" --write-out '%{http_code}' \
+              --request POST https://api.brandenfarmer.com/api/webhooks/cal \
+              --header 'Content-Type: application/json' --data '{}') || status=000
+            if [[ "$status" == 401 ]] && jq -e '.error == "invalid_signature"' "$RUNNER_TEMP/cal-smoke.json" > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Production Cal webhook is not ready (HTTP $status)"
+          exit 1
+
       - name: Deploy production frontend
         id: deploy-pages
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
@@ -300,4 +316,20 @@ jobs:
             sleep 5
           done
           echo "::error::Preview Ask is not ready (HTTP $status)"
+          exit 1
+
+      - name: Verify preview Cal webhook configuration
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            status=$(curl --show-error --silent --max-time 20 \
+              --output "$RUNNER_TEMP/cal-smoke.json" --write-out '%{http_code}' \
+              --request POST https://api-preview.brandenfarmer.com/api/webhooks/cal \
+              --header 'Content-Type: application/json' --data '{}') || status=000
+            if [[ "$status" == 401 ]] && jq -e '.error == "invalid_signature"' "$RUNNER_TEMP/cal-smoke.json" > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Preview Cal webhook is not ready (HTTP $status)"
           exit 1

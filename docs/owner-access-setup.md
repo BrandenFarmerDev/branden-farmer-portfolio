@@ -82,7 +82,7 @@ ACCESS_TEAM_DOMAIN = "your-actual-team.cloudflareaccess.com"
 ACCESS_AUD = "your-actual-preview-application-audience-tag"
 ```
 
-This repository expects the team domain without `https://` and without a trailing slash. Its verifier adds the scheme itself. Keep `AI_ENABLED = "false"`.
+This repository expects the team domain without `https://` and without a trailing slash. Its verifier adds the scheme itself. `AI_ENABLED` is controlled separately in the deployment configuration and does not affect Access protection.
 
 ## 7. Test after preview deployment
 
