@@ -45,7 +45,7 @@ period = 60
 name = "branden-farmer-portfolio-api-preview"
 
 [env.preview.secrets]
-required = ["ASK_SIGNING_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
+required = ["ASK_SIGNING_SECRET", "CAL_WEBHOOK_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
 
 [env.preview.ai]
 binding = "AI"
@@ -55,7 +55,7 @@ ALLOWED_ORIGIN = "https://preview.brandenfarmer.com"
 TURNSTILE_EXPECTED_HOSTNAME = "preview.brandenfarmer.com"
 CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
 CONTACT_TO_EMAIL = "delivered@resend.dev"
-AI_ENABLED = "false"
+AI_ENABLED = "true"
 AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
 OWNER_EMAIL = "branden_farmer@live.com"
 CAL_EVENT_TYPE_ID = "7260011"
@@ -92,7 +92,7 @@ period = 60
 name = "branden-farmer-portfolio-api"
 
 [env.production.secrets]
-required = ["ASK_SIGNING_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
+required = ["ASK_SIGNING_SECRET", "CAL_WEBHOOK_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
 
 [env.production.ai]
 binding = "AI"
@@ -102,7 +102,7 @@ ALLOWED_ORIGIN = "https://brandenfarmer.com"
 TURNSTILE_EXPECTED_HOSTNAME = "brandenfarmer.com"
 CONTACT_FROM_EMAIL = "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>"
 CONTACT_TO_EMAIL = "branden_farmer@live.com"
-AI_ENABLED = "false"
+AI_ENABLED = "true"
 AI_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8"
 OWNER_EMAIL = "branden_farmer@live.com"
 CAL_EVENT_TYPE_ID = "7260011"

@@ -1,6 +1,6 @@
 # Core portfolio release checklist
 
-Use this checklist for a reviewed preview and again before a production release. The three project demos are outside the current release scope and must remain labelled as prototypes. Generated Ask answers stay off until the preview evaluation is approved.
+Use this checklist for a reviewed preview and again before a production release. The three project demos are outside the current release scope and must remain labelled as prototypes. Evaluate generated Ask answers in preview before enabling them in production.
 
 ## Automated gates
 
@@ -16,8 +16,10 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] `main` requires a pull request plus the `Quality gates` and `Analyze JavaScript and TypeScript` checks, with force pushes and direct pushes blocked.
 - [ ] The Pages custom domain is `brandenfarmer.com`, `www` redirects to it, and the Worker custom domain is `api.brandenfarmer.com`.
 - [ ] Production Resend and Turnstile secrets exist in the Cloudflare Worker secret store, not GitHub.
+- [ ] Each environment's Turnstile secret matches the widget whose public site key is built into that environment's Pages frontend; complete a real browser challenge and confirm the API accepts it.
 - [ ] Production and preview D1 databases exist, their IDs are in `wrangler.toml`, and the deploy token has D1 Edit.
 - [ ] `ASK_SIGNING_SECRET`, `CAL_WEBHOOK_SECRET`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, and `CAL_EVENT_TYPE_ID` are set per environment.
+- [ ] The production Cal.com event webhook is enabled for created, rescheduled, and canceled bookings, points to the production API, and uses the production Worker's `CAL_WEBHOOK_SECRET`.
 - [ ] Cloudflare Access protects only `/owner` and `/api/owner`, allows only the owner, and bypasses OPTIONS.
 - [ ] The [owner Access guide](owner-access-setup.md) is complete: each environment's page and API share an application, its AUD matches the Worker, and Eager redirect cookie is enabled.
 - [ ] Preview Pages has a successful `preview` branch upload and a proxied `preview` CNAME pointing to its branch alias, not the production Pages hostname.
@@ -28,7 +30,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] About and digital résumé facts match the approved résumé and design source.
 - [ ] GitHub profile, portfolio source, LinkedIn, email, PDF, and Cal.com destinations are correct.
 - [ ] Project cards still say `Prototype - in development` and do not imply shipped outcomes.
-- [ ] Ask Branden returns source-linked evidence, declines unsupported claims, and states that generated answers are paused while `AI_ENABLED` is off.
+- [ ] Ask Branden returns source-linked generated answers for supported questions, declines unsupported claims, and falls back to evidence-only results if generation is unavailable or paused.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).
 - [ ] Canonical URL, sitemap, and metadata use `https://brandenfarmer.com`.
 
