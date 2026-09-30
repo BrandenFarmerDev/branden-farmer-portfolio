@@ -158,6 +158,23 @@ jobs:
           --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
           https://api.brandenfarmer.com/api/health
 
+      - name: Verify production Ask configuration
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            status=$(curl --show-error --silent --max-time 20 \
+              --output "$RUNNER_TEMP/ask-smoke.json" --write-out '%{http_code}' \
+              --request POST https://api.brandenfarmer.com/api/ask \
+              --header 'Origin: https://brandenfarmer.com' \
+              --header 'Content-Type: application/json' --data '{}') || status=000
+            if [[ "$status" == 400 ]] && jq -e '.error == "validation_error"' "$RUNNER_TEMP/ask-smoke.json" > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Production Ask is not ready (HTTP $status)"
+          exit 1
+
       - name: Deploy production frontend
         id: deploy-pages
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
@@ -267,3 +284,20 @@ jobs:
           curl --fail --show-error --silent
           --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
           https://api-preview.brandenfarmer.com/api/health
+
+      - name: Verify preview Ask configuration
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4 5; do
+            status=$(curl --show-error --silent --max-time 20 \
+              --output "$RUNNER_TEMP/ask-smoke.json" --write-out '%{http_code}' \
+              --request POST https://api-preview.brandenfarmer.com/api/ask \
+              --header 'Origin: https://preview.brandenfarmer.com' \
+              --header 'Content-Type: application/json' --data '{}') || status=000
+            if [[ "$status" == 400 ]] && jq -e '.error == "validation_error"' "$RUNNER_TEMP/ask-smoke.json" > /dev/null; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "::error::Preview Ask is not ready (HTTP $status)"
+          exit 1

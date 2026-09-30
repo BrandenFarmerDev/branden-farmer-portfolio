@@ -44,6 +44,9 @@ period = 60
 [env.preview]
 name = "branden-farmer-portfolio-api-preview"
 
+[env.preview.secrets]
+required = ["ASK_SIGNING_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
+
 [env.preview.ai]
 binding = "AI"
 
@@ -87,6 +90,9 @@ period = 60
 
 [env.production]
 name = "branden-farmer-portfolio-api"
+
+[env.production.secrets]
+required = ["ASK_SIGNING_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
 
 [env.production.ai]
 binding = "AI"
