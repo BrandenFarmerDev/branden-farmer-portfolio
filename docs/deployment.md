@@ -7,11 +7,11 @@ Production deployment is part of `.github/workflows/ci.yml`. A pull request neve
 The production job performs this sequence:
 
 1. Install the locked dependencies with `npm ci`.
-2. Validate the required production configuration, including a real production D1 `database_id`.
+2. Validate the required production configuration, including a real production D1 `database_id` and the Worker's required secrets.
 3. Dry-run the production Worker bundle and build the frontend with production public variables.
 4. Apply pending D1 migrations to the production database, then sync the approved Ask evidence (the new version is activated and older versions are removed).
 5. Deploy the Worker with `wrangler deploy --env production`.
-6. Verify `https://api.brandenfarmer.com/api/health`.
+6. Verify `https://api.brandenfarmer.com/api/health` and the Ask route's configuration.
 7. Upload `app/frontend/dist` to Cloudflare Pages.
 8. Verify both the immutable Pages deployment URL and `https://brandenfarmer.com`.
 
@@ -48,11 +48,12 @@ The production Worker configuration is versioned in `app/backend/wrangler.toml`:
 
 The production Worker already exists according to the handoff. Do not redeploy the unfinished feature branch to production as a setup step. The production workflow applies migrations, syncs knowledge, and deploys after a reviewed merge, once the configuration below is complete.
 
-The existing production Worker is expected to have these two secrets. Use the commands below only when intentionally adding or replacing them. Wrangler prompts for each value and stores it in Cloudflare; never put either value in GitHub or this repository. `wrangler secret put` creates a new deployed version of the remote Worker, so this is a live configuration change, not a read-only check.
+The production Worker requires `ASK_SIGNING_SECRET`, `RESEND_API_KEY`, and `TURNSTILE_SECRET_KEY`. Wrangler now rejects a deployment if any of these are absent. Use the commands below only when intentionally adding or replacing them. Wrangler prompts for each value and stores it in Cloudflare; never put a value in GitHub or this repository. `wrangler secret put` creates a new deployed version of the remote Worker, so this is a live configuration change, not a read-only check.
 
 ```powershell
 npx.cmd wrangler secret put RESEND_API_KEY --env production --config app/backend/wrangler.toml
 npx.cmd wrangler secret put TURNSTILE_SECRET_KEY --env production --config app/backend/wrangler.toml
+npx.cmd wrangler secret put ASK_SIGNING_SECRET --env production --config app/backend/wrangler.toml
 ```
 
 Follow the [contact form setup guide](contact-form-setup.md) for Resend DNS and Turnstile configuration.
