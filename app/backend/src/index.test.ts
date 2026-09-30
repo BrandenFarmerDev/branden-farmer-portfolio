@@ -58,19 +58,31 @@ describe("contact origin enforcement", () => {
     expect(console.info).toHaveBeenCalledWith(expect.stringContaining('"event":"request_complete"'));
   });
 
-  it("keeps Ask Branden unavailable and rejects unsupported methods", async () => {
-    const askResponse = await worker.fetch(
-      new Request("https://api.brandenfarmer.com/api/ask", { method: "POST" }) as unknown as Parameters<typeof worker.fetch>[0],
-      {},
-    );
-    const methodResponse = await worker.fetch(
-      new Request("https://api.brandenfarmer.com/api/health", { method: "POST" }) as unknown as Parameters<typeof worker.fetch>[0],
-      {},
-    );
+  it("gates Ask by origin, rejects unsupported methods, and protects owner routes", async () => {
+    const env = { ALLOWED_ORIGIN: "https://brandenfarmer.com" };
+    const call = (path: string, init?: RequestInit) => worker.fetch(
+      new Request(`https://api.brandenfarmer.com${path}`, init) as unknown as Parameters<typeof worker.fetch>[0], env);
 
-    expect(askResponse.status).toBe(501);
+    const foreignAsk = await call("/api/ask", { method: "POST", headers: { Origin: "https://attacker.example" } });
+    const unconfiguredAsk = await call("/api/ask", { method: "POST", headers: { Origin: env.ALLOWED_ORIGIN } });
+    const methodResponse = await call("/api/health", { method: "POST" });
+    const webhookMethod = await call("/api/webhooks/cal");
+    const owner = await call("/api/owner/contacts");
+
+    expect(foreignAsk.status).toBe(403);
+    expect(unconfiguredAsk.status).toBe(503);
+    expect(unconfiguredAsk.headers.get("Access-Control-Allow-Credentials")).toBe("true");
     expect(methodResponse.status).toBe(405);
     expect(methodResponse.headers.get("Allow")).toBe("GET");
+    expect(webhookMethod.status).toBe(405);
+    expect(owner.status).toBe(503);
+    expect(owner.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("runs scheduled maintenance without leaking errors", async () => {
+    const waitUntil = vi.fn();
+    worker.scheduled({} as ScheduledController, {}, { waitUntil } as unknown as ExecutionContext);
+    await expect(waitUntil.mock.calls[0][0]).resolves.toBeUndefined();
   });
 
   it("returns a safe not-found response for unknown routes", async () => {

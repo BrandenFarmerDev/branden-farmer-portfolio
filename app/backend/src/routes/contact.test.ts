@@ -1,6 +1,14 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { Env } from "../types";
 import { contactRoute } from "./contact";
+
+const store = vi.hoisted(() => ({
+  saveContact: vi.fn(),
+  claimContact: vi.fn(),
+  finishContact: vi.fn(),
+}));
+
+vi.mock("../services/contact-store", () => store);
 
 const contact = {
   submissionId: "123e4567-e89b-42d3-a456-426614174000",
@@ -25,6 +33,7 @@ function createRequest(body: unknown = contact) {
 
 function createEnv(rateLimitSuccess = true): Env {
   return {
+    PORTFOLIO_DB: {} as D1Database,
     CONTACT_FROM_EMAIL: "Branden Farmer Portfolio <contact@mail.brandenfarmer.com>",
     CONTACT_TO_EMAIL: "branden_farmer@live.com",
     RESEND_API_KEY: "resend-test-key",
@@ -38,6 +47,16 @@ function createEnv(rateLimitSuccess = true): Env {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+beforeEach(() => {
+  store.saveContact.mockReset().mockImplementation(async (_db, value) => ({
+    owner_notification_state: "pending",
+    confirmation_state: "pending",
+    ...value,
+  }));
+  store.claimContact.mockReset().mockResolvedValue(true);
+  store.finishContact.mockReset().mockResolvedValue(undefined);
 });
 
 describe("contactRoute", () => {
@@ -140,8 +159,24 @@ describe("contactRoute", () => {
 
     const response = await contactRoute(createRequest(), createEnv());
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(202);
+    expect(await response.json()).toMatchObject({ ok: true, message: expect.stringContaining("saved") });
+    expect(store.finishContact).toHaveBeenCalledWith(expect.anything(), contact.submissionId, false, false);
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not send email when storage is unavailable", async () => {
+    store.saveContact.mockRejectedValueOnce(new Error("D1 unavailable"));
+    const fetchMock = vi.fn().mockResolvedValue(Response.json({
+      success: true, action: "contact_form", hostname: "brandenfarmer.com",
+    }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await contactRoute(createRequest(), createEnv());
+
+    expect(response.status).toBe(503);
+    expect(store.claimContact).not.toHaveBeenCalled();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("stops reading an oversized body when Content-Length is missing or understated", async () => {

@@ -276,7 +276,9 @@ export function ContactForm() {
           {fieldErrors.turnstileToken ? <p id="contact-security-error" className="field-error">{fieldErrors.turnstileToken}</p> : null}
         </div>
 
-        <p className="form-privacy">Your message is processed by Cloudflare and delivered through Resend. It is not stored in the portfolio application.</p>
+        <p className="form-privacy">
+          Your message is stored privately for up to 12 months and delivered through Resend. <a href="/privacy">Privacy notice</a>
+        </p>
 
         <button className="button button-primary contact-submit" type="submit" disabled={isSubmitting || !siteKey}>
           <Send aria-hidden="true" size={17} />

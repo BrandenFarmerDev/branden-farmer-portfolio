@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ContactApiError, getApiHealth, submitContact } from "./api";
+import { ContactApiError, getApiHealth, ownerApi, submitAsk, submitContact } from "./api";
 
 const contact = {
   submissionId: "123e4567-e89b-42d3-a456-426614174000",
@@ -68,5 +68,32 @@ describe("API client", () => {
       status: 502,
       details: { error: "invalid_response" },
     });
+  });
+
+  it("returns Ask evidence even for quota and outage statuses, with credentials", async () => {
+    const evidenceOnly = { status: "evidence_only", message: "Used up.", evidence: [], remaining: 0 };
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json(evidenceOnly, { status: 429 }))
+      .mockResolvedValueOnce(Response.json({ error: "validation_error", message: "Too short." }, { status: 400 }));
+    const request = { mode: "question" as const, text: "Power BI?", turnstileToken: "token" };
+
+    await expect(submitAsk(request)).resolves.toEqual(evidenceOnly);
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/ask", expect.objectContaining({ credentials: "include" }));
+    await expect(submitAsk(request)).rejects.toMatchObject({ status: 400, message: "Too short." });
+  });
+
+  it("calls owner routes with Access credentials and surfaces failures", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({ contacts: [] }))
+      .mockResolvedValueOnce(Response.json({ ok: true }))
+      .mockResolvedValueOnce(Response.json({ error: "forbidden", message: "Owner access is required." }, { status: 403 }));
+
+    await expect(ownerApi.contacts("a&b")).resolves.toEqual({ contacts: [] });
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/owner/contacts?q=a%26b", expect.objectContaining({ credentials: "include" }));
+    await ownerApi.setContactStatus("id/1", "replied");
+    expect(fetch).toHaveBeenLastCalledWith("http://localhost:8787/api/owner/contacts/id%2F1", expect.objectContaining({
+      method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "replied" }),
+    }));
+    await expect(ownerApi.settings()).rejects.toMatchObject({ status: 403 });
   });
 });

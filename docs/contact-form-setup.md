@@ -1,6 +1,6 @@
 # Contact form setup
 
-The form code is complete, but production delivery remains disabled until Resend, Turnstile, Worker secrets, and the public domains are configured. Do not paste production secrets into source files, frontend variables, GitHub issues, or chat.
+The form stores each validated message in the portfolio D1 database before sending it through Resend, so a delivery failure does not lose the message. Production delivery requires Resend, Turnstile, the D1 database, Worker secrets, and the public domains. Do not paste production secrets into source files, frontend variables, GitHub issues, or chat.
 
 ## 1. Verify a sending subdomain in Resend
 
@@ -93,9 +93,9 @@ The non-secret production settings already live under `[env.production.vars]` in
 ## 6. Validate before enabling traffic
 
 1. Run `npm run quality` locally.
-2. Deploy to a preview environment first and submit one test message.
-3. Confirm the notification reaches `branden_farmer@live.com`, includes the required company and position, has the correct sender, and replies to the visitor's address.
-4. Confirm the visitor receives a separate acknowledgement from the portfolio address and that replying to it addresses `branden_farmer@live.com`.
-5. Test invalid fields, an expired Turnstile challenge, repeated submissions, oversized requests, and an unavailable provider.
+2. Deploy to the preview environment first and submit one test message. Preview delivers the owner notification to Resend's `delivered@resend.dev` test inbox; use that address as the visitor email too.
+3. Confirm the message appears on `/owner`, and that the owner notification includes the required company and position, has the correct sender, and replies to the visitor's address.
+4. Confirm the visitor acknowledgement is sent separately from the portfolio address and replies to `branden_farmer@live.com`.
+5. Test invalid fields, an expired Turnstile challenge, repeated submissions, oversized requests, and an unavailable provider. A provider failure after storage must show "saved" and leave a retry on the owner page.
 6. Review Worker logs without logging names, email addresses, message bodies, tokens, or secrets.
-7. Only then merge to `main`; the post-merge workflow reruns quality gates, deploys the Worker and Pages site, and verifies both production endpoints.
+7. Only then merge to `main`; the post-merge workflow reruns quality gates, applies D1 migrations, deploys the Worker and Pages site, and verifies both production endpoints.

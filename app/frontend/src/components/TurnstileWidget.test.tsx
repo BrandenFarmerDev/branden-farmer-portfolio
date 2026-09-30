@@ -47,6 +47,14 @@ describe("TurnstileWidget", () => {
     expect(onError).toHaveBeenCalledWith(expect.stringContaining("not configured"));
   });
 
+  it("renders the requested Ask action", async () => {
+    const renderWidget = vi.fn().mockReturnValue("widget-ask");
+    window.turnstile = { render: renderWidget, remove: vi.fn() };
+    render(<TurnstileWidget siteKey="site-key" resetKey={0} action="ask_branden" onToken={vi.fn()} onError={vi.fn()} />);
+
+    await waitFor(() => expect(renderWidget).toHaveBeenCalledWith(expect.anything(), expect.objectContaining({ action: "ask_branden" })));
+  });
+
   it("loads the Turnstile script once and renders after it becomes available", async () => {
     const renderWidget = vi.fn().mockReturnValue("widget-2");
     const onError = vi.fn();

@@ -1,8 +1,7 @@
-import type { ContactRequest } from "@portfolio/shared";
+import { errorResponse } from "./http";
 import type { Env } from "../types";
 
 const SITEVERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-const EXPECTED_ACTION = "contact_form";
 const LOCAL_TEST_SECRET = "1x0000000000000000000000000000000AA";
 const LOCAL_TEST_TOKEN = "XXXX.DUMMY.TOKEN.XXXX";
 
@@ -16,8 +15,15 @@ export type TurnstileResult =
   | { success: true }
   | { success: false; reason: "invalid" | "unavailable" };
 
+export function turnstileError(reason: "invalid" | "unavailable"): Response {
+  return reason === "unavailable"
+    ? errorResponse(503, "verification_unavailable", "The security check is temporarily unavailable. Please try again.")
+    : errorResponse(422, "verification_failed", "The security check expired or was rejected. Please complete it again.");
+}
+
 export async function verifyTurnstile(
-  contact: ContactRequest,
+  token: string,
+  expectedAction: "contact_form" | "ask_branden",
   request: Request,
   env: Env,
 ): Promise<TurnstileResult> {
@@ -34,7 +40,7 @@ export async function verifyTurnstile(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         secret: env.TURNSTILE_SECRET_KEY,
-        response: contact.turnstileToken,
+        response: token,
         remoteip: request.headers.get("CF-Connecting-IP") ?? undefined,
       }),
       signal: controller.signal,
@@ -48,8 +54,8 @@ export async function verifyTurnstile(
     // Trust only Siteverify's success flag for this exact local test pair.
     const localTestResponse = env.TURNSTILE_SECRET_KEY === LOCAL_TEST_SECRET
       && env.TURNSTILE_EXPECTED_HOSTNAME === "localhost"
-      && contact.turnstileToken === LOCAL_TEST_TOKEN;
-    const valid = result.success && (localTestResponse || (result.action === EXPECTED_ACTION
+      && token === LOCAL_TEST_TOKEN;
+    const valid = result.success && (localTestResponse || (result.action === expectedAction
       && result.hostname === env.TURNSTILE_EXPECTED_HOSTNAME));
 
     return valid ? { success: true } : { success: false, reason: "invalid" };

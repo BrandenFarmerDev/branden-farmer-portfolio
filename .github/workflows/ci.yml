@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main, "bfarmer/**"]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -46,6 +47,10 @@ jobs:
 
       - name: Build production artifacts
         run: npm run build
+
+      - name: Validate approved knowledge corpus
+        working-directory: app/backend
+        run: node scripts/build-knowledge-sql.ts .generated/knowledge.sql
 
       - name: Audit dependencies
         run: npm run audit
@@ -104,9 +109,33 @@ jobs:
           test "$CLOUDFLARE_PAGES_PROJECT" = "branden-farmer-portfolio" || { echo "::error::CLOUDFLARE_PAGES_PROJECT does not match the production Pages project"; exit 1; }
           test "$VITE_API_BASE_URL" = "https://api.brandenfarmer.com" || { echo "::error::VITE_API_BASE_URL does not match the production Worker origin"; exit 1; }
           case "$VITE_TURNSTILE_SITE_KEY" in replace_*|*placeholder*) echo "::error::VITE_TURNSTILE_SITE_KEY is still a placeholder"; exit 1;; esac
+          if grep -q REPLACE_WITH_PRODUCTION_D1_ID app/backend/wrangler.toml; then echo "::error::Set the production D1 database_id in app/backend/wrangler.toml"; exit 1; fi
+          if grep -q REPLACE_WITH_PRODUCTION_CAL_EVENT_TYPE_ID app/backend/wrangler.toml; then echo "::error::Set the production Cal.com event type ID"; exit 1; fi
+          if grep -q REPLACE_WITH_PRODUCTION_ACCESS_TEAM_DOMAIN app/backend/wrangler.toml; then echo "::error::Set the production Access team domain"; exit 1; fi
+          if grep -q REPLACE_WITH_PRODUCTION_ACCESS_AUD app/backend/wrangler.toml; then echo "::error::Set the production Access audience tag"; exit 1; fi
 
       - name: Validate production Worker bundle
         run: npm run build:production --workspace @portfolio/backend
+
+      - name: Build approved knowledge SQL
+        working-directory: app/backend
+        run: node scripts/build-knowledge-sql.ts .generated/knowledge.sql
+
+      - name: Apply production D1 migrations
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: d1 migrations apply PORTFOLIO_DB --remote --env production
+
+      - name: Sync approved knowledge to production D1
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: d1 execute PORTFOLIO_DB --remote --env production --file .generated/knowledge.sql
 
       - name: Build production frontend
         env:
@@ -152,3 +181,89 @@ jobs:
           curl --fail --show-error --silent --location
           --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
           https://brandenfarmer.com/ > /dev/null
+
+  deploy-preview:
+    name: Deploy preview
+    needs: quality
+    # Manual only, from a development branch; never from pull requests or main.
+    if: github.event_name == 'workflow_dispatch' && startsWith(github.ref, 'refs/heads/bfarmer/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    environment:
+      name: preview
+      url: https://preview.brandenfarmer.com
+    concurrency:
+      group: portfolio-preview
+      cancel-in-progress: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Validate preview configuration
+        shell: bash
+        env:
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: |
+          test -n "$VITE_TURNSTILE_SITE_KEY" || { echo "::error::Missing preview variable VITE_TURNSTILE_SITE_KEY"; exit 1; }
+          case "$VITE_TURNSTILE_SITE_KEY" in replace_*|*placeholder*) echo "::error::VITE_TURNSTILE_SITE_KEY is still a placeholder"; exit 1;; esac
+          if grep -q REPLACE_WITH_PREVIEW_D1_ID app/backend/wrangler.toml; then echo "::error::Set the preview D1 database_id"; exit 1; fi
+          if grep -q REPLACE_WITH_PREVIEW_CAL_EVENT_TYPE_ID app/backend/wrangler.toml; then echo "::error::Set the preview Cal.com event type ID"; exit 1; fi
+          if grep -q REPLACE_WITH_PREVIEW_ACCESS_TEAM_DOMAIN app/backend/wrangler.toml; then echo "::error::Set the preview Access team domain"; exit 1; fi
+          if grep -q REPLACE_WITH_PREVIEW_ACCESS_AUD app/backend/wrangler.toml; then echo "::error::Set the preview Access audience tag"; exit 1; fi
+
+      - name: Build preview frontend and knowledge SQL
+        env:
+          VITE_API_BASE_URL: https://api-preview.brandenfarmer.com
+          VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+        run: |
+          npm run build --workspace @portfolio/frontend
+          (cd app/backend && node scripts/build-knowledge-sql.ts .generated/knowledge.sql)
+
+      - name: Apply preview D1 migrations
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: d1 migrations apply PORTFOLIO_DB --remote --env preview
+
+      - name: Sync approved knowledge to preview D1
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: d1 execute PORTFOLIO_DB --remote --env preview --file .generated/knowledge.sql
+
+      - name: Deploy preview Worker
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: app/backend
+          command: deploy --env preview
+
+      - name: Deploy preview frontend
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy app/frontend/dist --project-name=branden-farmer-portfolio --branch=preview
+
+      - name: Verify preview API
+        shell: bash
+        run: >-
+          curl --fail --show-error --silent
+          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
+          https://api-preview.brandenfarmer.com/api/health

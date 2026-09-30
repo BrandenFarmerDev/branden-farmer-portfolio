@@ -33,8 +33,16 @@ export function Layout() {
         description: "Contact Branden Farmer by secure form, email, LinkedIn, GitHub, or recruiter interview booking.",
       },
       "/ask": {
-        title: "Ask Branden | Planned portfolio assistant",
-        description: "A transparent preview of the planned evidence-grounded Ask Branden assistant.",
+        title: "Ask Branden | Evidence-grounded answers",
+        description: "Ask about Branden Farmer's experience or compare a job description with approved, source-linked portfolio evidence.",
+      },
+      "/privacy": {
+        title: "Privacy | Branden Farmer",
+        description: "What the portfolio stores for contact, booking, and Ask Branden, and how long it is kept.",
+      },
+      "/owner": {
+        title: "Owner tools | Branden Farmer",
+        description: "Private owner tools.",
       },
     };
     const meta = routeMeta[location.pathname] ?? routeMeta["/"];
