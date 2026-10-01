@@ -1,8 +1,8 @@
-import type { AskMode, AskRequest, AskResponse, EvidenceLink } from "@portfolio/shared";
+import type { AskMode, AskRequest, AskResponse, AskStatusResponse, EvidenceLink } from "@portfolio/shared";
 import { DEFAULT_MODEL, generateAnswer, recordUsage } from "../services/assistant";
 import { errorResponse, hashClient, readJson } from "../services/http";
 import { searchKnowledge } from "../services/knowledge";
-import { isAiEnabled, reserveQuota, resolveVisitor } from "../services/quota";
+import { isAiEnabled, readAllowance, reserveQuota, resolveVisitor, usageDay } from "../services/quota";
 import { turnstileError, verifyTurnstile } from "../services/turnstile";
 import type { Env } from "../types";
 
@@ -87,7 +87,7 @@ export async function askRoute(request: Request, env: Env): Promise<Response> {
     });
   }
 
-  const day = new Date().toISOString().slice(0, 10);
+  const day = usageDay();
   const visitor = await resolveVisitor(request, env.ASK_SIGNING_SECRET, day);
   let quota;
   try {
@@ -97,8 +97,9 @@ export async function askRoute(request: Request, env: Env): Promise<Response> {
       evidence, remaining: null }, 503, visitor.setCookie);
   }
   if (!quota.ok) {
+    const allowance = await readAllowance(db, visitor, day).catch(() => undefined);
     return askResponse({ status: "evidence_only", message: "Today's answer allowance is used up. These approved sections match your request.",
-      evidence, remaining: 0 }, 429, visitor.setCookie);
+      evidence, remaining: 0, allowance }, 429, visitor.setCookie);
   }
 
   const model = env.AI_MODEL ?? DEFAULT_MODEL;
@@ -107,7 +108,7 @@ export async function askRoute(request: Request, env: Env): Promise<Response> {
 
   if (!generation.answer) {
     return askResponse({ status: "evidence_only", message: "A supported answer could not be produced. These approved sections match your request.",
-      evidence, remaining: quota.remaining }, 200, visitor.setCookie);
+      evidence, remaining: quota.remaining, allowance: quota.allowance }, 200, visitor.setCookie);
   }
 
   const cited = new Set(generation.answer.citations);
@@ -119,5 +120,18 @@ export async function askRoute(request: Request, env: Env): Promise<Response> {
     gaps: generation.answer.gaps,
     evidence: evidence.filter((link) => cited.has(link.id)),
     remaining: quota.remaining,
+    allowance: quota.allowance,
   }, 200, visitor.setCookie);
+}
+
+export async function askStatusRoute(request: Request, env: Env): Promise<Response> {
+  const db = env.PORTFOLIO_DB;
+  const paused: AskStatusResponse = { aiEnabled: false, allowance: null };
+  if (!db || !env.ASK_SIGNING_SECRET || !await isAiEnabled(env, db)) return Response.json(paused);
+
+  const day = usageDay();
+  // Read-only: never issue a visitor cookie to someone who has not asked a question.
+  const visitor = await resolveVisitor(request, env.ASK_SIGNING_SECRET, day);
+  const allowance = await readAllowance(db, visitor, day).catch(() => null);
+  return Response.json({ aiEnabled: true, allowance } satisfies AskStatusResponse);
 }

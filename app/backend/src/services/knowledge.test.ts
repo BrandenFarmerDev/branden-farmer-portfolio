@@ -23,6 +23,15 @@ describe("approved knowledge", () => {
     expect(passages.some((passage) => passage.body.includes("(775)"))).toBe(false);
   });
 
+  it("links each résumé role, skill, project, and About passage to its own anchor", () => {
+    const passages = buildKnowledgePassages();
+    const anchored = passages.filter((passage) => /^(role|skills|resume-project|area|career)-|^(about-overview|working-principles)$/.test(passage.id));
+    expect(anchored.length).toBeGreaterThan(15);
+    for (const passage of anchored) expect(passage.url.endsWith(`#${passage.id}`)).toBe(true);
+    expect(passages.find((passage) => passage.id === "role-business-intelligence-developer-iii-2")?.url)
+      .toBe("/resume#role-business-intelligence-developer-iii-2");
+  });
+
   it("retrieves ranked evidence from the active version only", async () => {
     const results = await searchKnowledge(db, "What experience does he have with Power BI and Palantir Foundry?", "question");
     expect(results.length).toBeGreaterThan(0);

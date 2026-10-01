@@ -68,6 +68,9 @@ describe("contact origin enforcement", () => {
     const methodResponse = await call("/api/health", { method: "POST" });
     const webhookMethod = await call("/api/webhooks/cal");
     const owner = await call("/api/owner/contacts");
+    const foreignStatus = await call("/api/ask/status", { headers: { Origin: "https://attacker.example" } });
+    const pausedStatus = await call("/api/ask/status", { headers: { Origin: env.ALLOWED_ORIGIN } });
+    const statusMethod = await call("/api/ask/status", { method: "POST", headers: { Origin: env.ALLOWED_ORIGIN } });
 
     expect(foreignAsk.status).toBe(403);
     expect(unconfiguredAsk.status).toBe(503);
@@ -77,6 +80,10 @@ describe("contact origin enforcement", () => {
     expect(webhookMethod.status).toBe(405);
     expect(owner.status).toBe(503);
     expect(owner.headers.get("X-Robots-Tag")).toBe("noindex");
+    expect(foreignStatus.status).toBe(403);
+    expect(await pausedStatus.json()).toEqual({ aiEnabled: false, allowance: null });
+    expect(pausedStatus.headers.get("Access-Control-Allow-Origin")).toBe(env.ALLOWED_ORIGIN);
+    expect(statusMethod.status).toBe(405);
   });
 
   it("runs scheduled maintenance without leaking errors", async () => {

@@ -43,6 +43,17 @@ export interface EvidenceLink {
   url: string;
 }
 
+export interface AskAllowance {
+  /** Generated answers this browser has started today. */
+  used: number;
+  /** Daily per-browser limit. */
+  limit: number;
+  /** Lowest remaining count across the browser, network, and site-wide allowances. */
+  remaining: number;
+  /** ISO timestamp of the next UTC midnight, when allowances reset. */
+  resetsAt: string;
+}
+
 export interface AskResponse {
   status: "answered" | "evidence_only" | "no_evidence";
   message: string;
@@ -51,6 +62,12 @@ export interface AskResponse {
   gaps?: string[];
   evidence: EvidenceLink[];
   remaining: number | null;
+  allowance?: AskAllowance;
+}
+
+export interface AskStatusResponse {
+  aiEnabled: boolean;
+  allowance: AskAllowance | null;
 }
 
 export type ContactStatus = "new" | "replied" | "archived";

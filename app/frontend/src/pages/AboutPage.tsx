@@ -2,9 +2,13 @@ import { ArrowRight, CodeXml } from "lucide-react";
 import { Link } from "react-router-dom";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
 import { PageIntro } from "../components/PageIntro";
+import { ABOUT_OVERVIEW_ID, anchorId, WORKING_PRINCIPLES_ID } from "../content/anchors";
 import { careerMilestones, experienceAreas, githubContent, siteContent, workingPrinciples } from "../content/site";
+import { useHashTarget } from "../lib/useHashTarget";
 
 export function AboutPage() {
+  useHashTarget();
+
   return (
     <>
       <PageIntro
@@ -13,13 +17,13 @@ export function AboutPage() {
         description={siteContent.introduction}
       />
       <section className="section content-width split-layout">
-        <div className="prose-column">
+        <div className="prose-column" id={ABOUT_OVERVIEW_ID}>
           <p className="eyebrow">Career narrative</p>
           <h2>Connecting systems to the people who rely on them</h2>
           <p>{siteContent.perspective}</p>
           <p>{siteContent.availability}</p>
         </div>
-        <div className="principles-list">
+        <div className="principles-list" id={WORKING_PRINCIPLES_ID}>
           <p className="eyebrow">Ways of working</p>
           <ol>
             {workingPrinciples.map((principle, index) => (
@@ -37,7 +41,7 @@ export function AboutPage() {
         </div>
         <ol className="career-timeline">
           {careerMilestones.map((milestone) => (
-            <li key={milestone.period}>
+            <li key={milestone.period} id={anchorId.career(milestone.title)}>
               <span className="timeline-period">{milestone.period}</span>
               <div>
                 <h3>{milestone.title}</h3>
@@ -58,7 +62,7 @@ export function AboutPage() {
           </div>
           <div className="area-grid">
             {experienceAreas.map((area) => (
-              <article key={area.title}>
+              <article key={area.title} id={anchorId.area(area.title)}>
                 <h3>{area.title}</h3>
                 <p>{area.description}</p>
                 <ul className="evidence-list">

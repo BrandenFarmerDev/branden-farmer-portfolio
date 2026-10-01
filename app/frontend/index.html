@@ -18,6 +18,19 @@
     <meta property="og:description" content="Practical software at the intersection of operations, data, and application development." />
     <meta name="twitter:card" content="summary" />
     <title>Branden Farmer | Operations, data, and software</title>
+    <script>
+      // Resolve the saved theme before first paint; Header.tsx owns later changes.
+      (function () {
+        var saved;
+        try {
+          saved = localStorage.getItem("portfolio-theme");
+        } catch (error) {
+          // Storage can be blocked; still resolve the system theme before paint.
+        }
+        var dark = saved === "dark" || (saved !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+        document.documentElement.dataset.theme = dark ? "dark" : "light";
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

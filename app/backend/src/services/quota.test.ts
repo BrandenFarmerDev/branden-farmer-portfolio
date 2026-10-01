@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { createTestD1 } from "../test/sqlite-d1";
-import { DAILY_LIMITS, isAiEnabled, reserveQuota, resolveVisitor, type Visitor } from "./quota";
+import { DAILY_LIMITS, isAiEnabled, readAllowance, reserveQuota, resolveVisitor, type Visitor } from "./quota";
 
 const secret = "test-signing-secret";
 const day = "2026-09-29";
@@ -74,6 +74,22 @@ describe("daily allowance", () => {
     const visitor = await resolveVisitor(request(), secret, day);
     const broken = { prepare: db.prepare, batch: () => Promise.reject(new Error("D1 unavailable")) } as unknown as D1Database;
     await expect(reserveQuota(broken, visitor, day)).rejects.toThrow("D1 unavailable");
+  });
+
+  it("reads the allowance without reserving and reports the tightest scope", async () => {
+    const visitor = await resolveVisitor(request(), secret, day);
+    expect(await readAllowance(db, visitor, day))
+      .toEqual({ used: 0, limit: DAILY_LIMITS.browser, remaining: DAILY_LIMITS.browser, resetsAt: "2026-09-30T00:00:00.000Z" });
+
+    const reserved = await reserveQuota(db, visitor, day);
+    expect(reserved).toMatchObject({ ok: true, remaining: 4, allowance: { used: 1, remaining: 4 } });
+    expect(await readAllowance(db, visitor, day)).toMatchObject({ used: 1, remaining: 4 });
+    expect(await counts()).toEqual([
+      { scope: "browser", count: 1 }, { scope: "global", count: 1 }, { scope: "ip", count: 1 },
+    ]);
+
+    await db.prepare("UPDATE ai_daily_usage SET count = ? WHERE scope = 'ip'").bind(DAILY_LIMITS.ip).run();
+    expect(await readAllowance(db, visitor, day)).toMatchObject({ used: 1, remaining: 0 });
   });
 });
 

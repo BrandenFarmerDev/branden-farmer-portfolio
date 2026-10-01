@@ -1,4 +1,4 @@
-import { askRoute } from "./routes/ask";
+import { askRoute, askStatusRoute } from "./routes/ask";
 import { calWebhookRoute } from "./routes/cal-webhook";
 import { contactRoute } from "./routes/contact";
 import { healthRoute } from "./routes/health";
@@ -44,6 +44,10 @@ function methodNotAllowed(allowed: string): Response {
   );
 }
 
+function originForbidden(): Response {
+  return Response.json({ error: "origin_forbidden", message: "This origin is not allowed." }, { status: 403 });
+}
+
 export default {
   async fetch(request, env): Promise<Response> {
     const startedAt = Date.now();
@@ -53,7 +57,7 @@ export default {
     if (request.method === "OPTIONS") {
       const response = isAllowedOrigin(request, env)
         ? new Response(null, { status: 204 })
-        : Response.json({ error: "origin_forbidden", message: "This origin is not allowed." }, { status: 403 });
+        : originForbidden();
       const finalResponse = addResponseHeaders(response, request, env, requestId);
       console.info(JSON.stringify({ event: "request_complete", requestId, method: request.method, path: pathname, status: finalResponse.status, durationMs: Date.now() - startedAt }));
       return finalResponse;
@@ -64,14 +68,13 @@ export default {
     try {
       if (pathname === "/api/health") {
         response = request.method === "GET" ? healthRoute() : methodNotAllowed("GET");
+      } else if (pathname === "/api/ask/status") {
+        if (request.method !== "GET") response = methodNotAllowed("GET");
+        else response = isAllowedOrigin(request, env) ? await askStatusRoute(request, env) : originForbidden();
       } else if (pathname === "/api/contact" || pathname === "/api/ask") {
         if (request.method !== "POST") response = methodNotAllowed("POST");
-        else if (!isAllowedOrigin(request, env)) {
-          response = Response.json(
-            { error: "origin_forbidden", message: "This origin is not allowed." },
-            { status: 403 },
-          );
-        } else response = pathname === "/api/ask" ? await askRoute(request, env) : await contactRoute(request, env);
+        else if (!isAllowedOrigin(request, env)) response = originForbidden();
+        else response = pathname === "/api/ask" ? await askRoute(request, env) : await contactRoute(request, env);
       } else if (pathname === "/api/webhooks/cal") {
         response = request.method === "POST" ? await calWebhookRoute(request, env) : methodNotAllowed("POST");
       } else if (pathname.startsWith("/api/owner/")) {

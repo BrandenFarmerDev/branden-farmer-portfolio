@@ -1,30 +1,19 @@
 import { CodeXml } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useState } from "react";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
 import { PageIntro } from "../components/PageIntro";
 import { ProjectCard } from "../components/ProjectCard";
 import { projects } from "../content/projects";
 import { githubContent, siteContent } from "../content/site";
+import { useHashTarget } from "../lib/useHashTarget";
 
 const filters = ["All", "Application", "Analytics", "Operations", "AI"] as const;
 type Filter = (typeof filters)[number];
 
 export function WorkPage() {
   const [filter, setFilter] = useState<Filter>("All");
-  const location = useLocation();
   const visibleProjects = filter === "All" ? projects : projects.filter((project) => project.category === filter);
-
-  useEffect(() => {
-    if (!location.hash) return;
-
-    try {
-      const target = document.getElementById(decodeURIComponent(location.hash.slice(1)));
-      target?.scrollIntoView({ block: "start" });
-    } catch {
-      // Ignore malformed URI fragments rather than interrupting page rendering.
-    }
-  }, [location.hash]);
+  useHashTarget();
 
   return (
     <>

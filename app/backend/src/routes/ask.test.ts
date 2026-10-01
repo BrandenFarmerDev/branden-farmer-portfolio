@@ -1,8 +1,9 @@
+import type { AskResponse } from "@portfolio/shared";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { buildKnowledgePassages, buildKnowledgeSql } from "../knowledge/corpus";
 import { createTestD1 } from "../test/sqlite-d1";
 import type { Env } from "../types";
-import { askRoute, validateAskRequest } from "./ask";
+import { askRoute, askStatusRoute, validateAskRequest } from "./ask";
 
 let db: D1Database;
 let close: () => void;
@@ -46,20 +47,22 @@ describe("askRoute", () => {
   it("answers with cited evidence, sets a visitor cookie, and declines the sixth daily answer", async () => {
     const env = createEnv();
     const first = await askRoute(ask(), env);
-    const body = await first.json();
+    const body = await first.json() as AskResponse;
     expect(first.status).toBe(200);
     expect(body).toMatchObject({
       status: "answered",
       answer: "Branden builds Power BI dashboards.",
-      evidence: [{ id: "skills-business-intelligence", url: "/resume#resume-skills-heading" }],
+      evidence: [{ id: "skills-business-intelligence", url: "/resume#skills-business-intelligence" }],
       remaining: 4,
+      allowance: { used: 1, limit: 5, remaining: 4 },
     });
+    expect(Date.parse(body.allowance!.resetsAt)).toBeGreaterThan(Date.now());
     const cookie = first.headers.get("Set-Cookie")!.split(";")[0];
 
     for (let index = 0; index < 4; index += 1) expect((await askRoute(ask(undefined, cookie), env)).status).toBe(200);
     const sixth = await askRoute(ask(undefined, cookie), env);
     expect(sixth.status).toBe(429);
-    expect(await sixth.json()).toMatchObject({ status: "evidence_only", remaining: 0 });
+    expect(await sixth.json()).toMatchObject({ status: "evidence_only", remaining: 0, allowance: { used: 5, remaining: 0 } });
     expect(env.AI!.run).toHaveBeenCalledTimes(5);
   });
 
@@ -94,6 +97,45 @@ describe("askRoute", () => {
     const env = createEnv({ PORTFOLIO_DB: noBatch });
     expect((await askRoute(ask(), env)).status).toBe(503);
     expect(env.AI!.run).not.toHaveBeenCalled();
+  });
+});
+
+describe("askStatusRoute", () => {
+  function status(cookie?: string) {
+    return new Request("https://api.brandenfarmer.com/api/ask/status", {
+      headers: { "CF-Connecting-IP": "192.0.2.1", ...(cookie ? { Cookie: cookie } : {}) },
+    });
+  }
+
+  it("reports the visitor's allowance without reserving or issuing a cookie", async () => {
+    const env = createEnv();
+    const fresh = await askStatusRoute(status(), env);
+    expect(fresh.headers.get("Set-Cookie")).toBeNull();
+    expect(await fresh.json()).toMatchObject({ aiEnabled: true, allowance: { used: 0, limit: 5, remaining: 5 } });
+
+    const cookie = (await askRoute(ask(), env)).headers.get("Set-Cookie")!.split(";")[0];
+    expect(await (await askStatusRoute(status(cookie), env)).json())
+      .toMatchObject({ aiEnabled: true, allowance: { used: 1, remaining: 4 } });
+    expect(await (await askStatusRoute(status(cookie), env)).json()).toMatchObject({ allowance: { used: 1 } });
+  });
+
+  it("reports network-wide exhaustion to a new browser", async () => {
+    const env = createEnv();
+    await db.prepare("INSERT INTO ai_daily_usage (usage_day, scope, key_hash, count, daily_limit, updated_at) VALUES (?, 'global', 'all', 100, 100, ?)")
+      .bind(new Date().toISOString().slice(0, 10), new Date().toISOString()).run();
+    expect(await (await askStatusRoute(status(), env)).json()).toMatchObject({ allowance: { used: 0, remaining: 0 } });
+  });
+
+  it("reports paused answers and tolerates storage failures", async () => {
+    expect(await (await askStatusRoute(status(), createEnv({ AI_ENABLED: "false" }))).json())
+      .toEqual({ aiEnabled: false, allowance: null });
+    expect(await (await askStatusRoute(status(), createEnv({ PORTFOLIO_DB: undefined }))).json())
+      .toEqual({ aiEnabled: false, allowance: null });
+    const failingReads = Object.assign(Object.create(db), {
+      prepare: (query: string) => query.includes("FROM ai_daily_usage") ? { bind: () => ({ all: () => Promise.reject(new Error("down")) }) } : db.prepare(query),
+    }) as D1Database;
+    expect(await (await askStatusRoute(status(), createEnv({ PORTFOLIO_DB: failingReads }))).json())
+      .toEqual({ aiEnabled: true, allowance: null });
   });
 });
 

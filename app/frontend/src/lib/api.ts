@@ -2,6 +2,7 @@ import type {
   ApiErrorResponse,
   AskRequest,
   AskResponse,
+  AskStatusResponse,
   ContactRequest,
   ContactStatus,
   ContactSuccessResponse,
@@ -77,6 +78,20 @@ export async function submitAsk(request: AskRequest, signal?: AbortSignal): Prom
   // Quota and outage responses still carry usable evidence links.
   if (body && "status" in body && Array.isArray(body.evidence)) return body;
   throw failure(response.status, body, "Ask Branden returned an unexpected response.");
+}
+
+function isAskStatus(value: unknown): value is AskStatusResponse {
+  if (!value || typeof value !== "object" || typeof (value as AskStatusResponse).aiEnabled !== "boolean") return false;
+  const { allowance } = value as AskStatusResponse;
+  return allowance === null || (typeof allowance === "object" && typeof allowance.used === "number"
+    && typeof allowance.limit === "number" && typeof allowance.remaining === "number" && typeof allowance.resetsAt === "string");
+}
+
+export async function getAskStatus(signal?: AbortSignal): Promise<AskStatusResponse> {
+  const response = await fetch(`${apiBaseUrl}/api/ask/status`, { credentials: "include", signal });
+  const body: unknown = await response.json().catch(() => null);
+  if (!response.ok || !isAskStatus(body)) throw failure(response.status, body, "The Ask allowance could not be loaded.");
+  return body;
 }
 
 async function ownerRequest<T>(path: string, init: RequestInit = {}): Promise<T> {

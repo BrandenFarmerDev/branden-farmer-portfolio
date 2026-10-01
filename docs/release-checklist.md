@@ -31,19 +31,20 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] GitHub profile, portfolio source, LinkedIn, email, PDF, and Cal.com destinations are correct.
 - [ ] Project cards still say `Prototype - in development` and do not imply shipped outcomes.
 - [ ] Ask Branden returns source-linked generated answers for supported questions, declines unsupported claims, and falls back to evidence-only results if generation is unavailable or paused.
+- [ ] Each Ask evidence link opens the exact résumé or About passage, highlights it, and moves focus to it; Back restores the previous answer.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).
 - [ ] Canonical URL, sitemap, and metadata use `https://brandenfarmer.com`.
 
 ## Core browser flows
 
-- [ ] Keyboard and pointer navigation work at desktop and mobile widths in light and dark themes.
+- [ ] Keyboard and pointer navigation work at desktop and mobile widths in light, dark, and system themes.
 - [ ] The menu closes with Escape and focus returns to its toggle.
 - [ ] Route changes announce a clear page heading and move keyboard focus to main content.
 - [ ] The PDF download returns `Branden_Farmer_Resume.pdf`.
 - [ ] The Cal.com dialog opens once; the direct URL remains available when the embed cannot load.
 - [ ] The contact form requires name, email, company, position, message, and a current Turnstile token.
 - [ ] A preview contact submission sends the owner notification and visitor confirmation once and appears on `/owner`.
-- [ ] With answers enabled in preview, the sixth question from one browser is declined and the evaluation set is reviewed for citation accuracy and phone-connection latency.
+- [ ] With answers enabled in preview, the Ask counter shows 0 of 5 on first load and increments per answer; the sixth question from one browser is declined, the button is disabled with its reset time, and the evaluation set is reviewed for citation accuracy and phone-connection latency.
 - [ ] A Cal.com test booking creates, reschedules, and cancels one history record; duplicate deliveries are ignored.
 - [ ] Loading `/owner` or `/api/owner/contacts` directly while signed out is blocked by Access.
 - [ ] After owner login in a normal browser session, page-to-API reads and mutations succeed; public homepage and health routes still work while signed out.
