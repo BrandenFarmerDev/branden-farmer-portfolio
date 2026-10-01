@@ -50,7 +50,8 @@ export function Layout() {
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", meta.description);
 
     if (initialRenderRef.current) initialRenderRef.current = false;
-    else mainRef.current?.focus({ preventScroll: true });
+    // Pages focus their own hash target; React runs page effects before this one.
+    else if (!location.hash) mainRef.current?.focus({ preventScroll: true });
   }, [location.hash, location.pathname]);
 
   return (

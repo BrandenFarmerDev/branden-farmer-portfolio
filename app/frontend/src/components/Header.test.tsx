@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { Header } from "./Header";
 
 describe("Header", () => {
@@ -24,12 +24,29 @@ describe("Header", () => {
     expect(screen.getByRole("button", { name: "Open navigation" })).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("persists the selected color theme", () => {
+  it("persists the selected color theme and follows the system by default", () => {
+    vi.mocked(window.matchMedia).mockImplementation((query: string) => ({
+      matches: true, media: query, onchange: null, addEventListener: vi.fn(), removeEventListener: vi.fn(),
+      addListener: vi.fn(), removeListener: vi.fn(), dispatchEvent: vi.fn(),
+    }));
     render(<MemoryRouter><Header /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: "Switch to dark mode" }));
+    const select = screen.getByRole("combobox", { name: "Color theme" });
 
+    expect(select).toHaveValue("system");
     expect(document.documentElement.dataset.theme).toBe("dark");
-    expect(localStorage.getItem("portfolio-theme")).toBe("dark");
+
+    fireEvent.change(select, { target: { value: "light" } });
+    expect(document.documentElement.dataset.theme).toBe("light");
+    expect(localStorage.getItem("portfolio-theme")).toBe("light");
+  });
+
+  it("falls back to the system theme when storage is blocked", () => {
+    vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new Error("blocked"); });
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new Error("blocked"); });
+    render(<MemoryRouter><Header /></MemoryRouter>);
+
+    expect(screen.getByRole("combobox", { name: "Color theme" })).toHaveValue("system");
+    expect(document.documentElement.dataset.theme).toBe("light");
   });
 
   it("marks Ask Branden as the active navigation destination", () => {

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { ContactApiError, getApiHealth, ownerApi, submitAsk, submitContact } from "./api";
+import { ContactApiError, getApiHealth, getAskStatus, ownerApi, submitAsk, submitContact } from "./api";
 
 const contact = {
   submissionId: "123e4567-e89b-42d3-a456-426614174000",
@@ -31,6 +31,23 @@ describe("API client", () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 503 }));
 
     await expect(getApiHealth()).rejects.toThrow("Health check failed with status 503");
+  });
+
+  it("loads the Ask allowance with credentials and rejects malformed status bodies", async () => {
+    const allowance = { used: 2, limit: 5, remaining: 3, resetsAt: "2026-10-02T00:00:00.000Z" };
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json({ aiEnabled: true, allowance }))
+      .mockResolvedValueOnce(Response.json({ aiEnabled: false, allowance: null }))
+      .mockResolvedValueOnce(Response.json({ status: "ok" }))
+      .mockResolvedValueOnce(Response.json({ aiEnabled: true, allowance: { used: "2" } }))
+      .mockResolvedValueOnce(Response.json({ error: "origin_forbidden", message: "Blocked." }, { status: 403 }));
+
+    await expect(getAskStatus()).resolves.toEqual({ aiEnabled: true, allowance });
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/ask/status", { credentials: "include", signal: undefined });
+    await expect(getAskStatus()).resolves.toEqual({ aiEnabled: false, allowance: null });
+    await expect(getAskStatus()).rejects.toThrow("The Ask allowance could not be loaded.");
+    await expect(getAskStatus()).rejects.toThrow("The Ask allowance could not be loaded.");
+    await expect(getAskStatus()).rejects.toMatchObject({ status: 403, message: "Blocked." });
   });
 
   it("submits a contact payload and validates success", async () => {

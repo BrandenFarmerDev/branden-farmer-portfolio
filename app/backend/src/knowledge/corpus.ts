@@ -1,3 +1,6 @@
+import {
+  ABOUT_OVERVIEW_ID, anchorId, chunk, ROLE_HIGHLIGHT_CHUNK, WORKING_PRINCIPLES_ID,
+} from "../../../frontend/src/content/anchors.ts";
 import { projects } from "../../../frontend/src/content/projects.ts";
 import { resumeContent } from "../../../frontend/src/content/resume.ts";
 import { careerMilestones, experienceAreas, siteContent, workingPrinciples } from "../../../frontend/src/content/site.ts";
@@ -12,16 +15,6 @@ export interface KnowledgePassage {
   url: string;
 }
 
-function slug(value: string): string {
-  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-function chunk<T>(items: readonly T[], size: number): T[][] {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) chunks.push(items.slice(index, index + size));
-  return chunks;
-}
-
 export function buildKnowledgePassages(): KnowledgePassage[] {
   const resume = "/resume";
   const passages: KnowledgePassage[] = [{
@@ -34,35 +27,38 @@ export function buildKnowledgePassages(): KnowledgePassage[] {
 
   for (const employer of resumeContent.experience) {
     for (const role of employer.roles) {
-      chunk(role.highlights, 4).forEach((highlights, index) => {
+      chunk(role.highlights, ROLE_HIGHLIGHT_CHUNK).forEach((highlights, index) => {
+        const id = anchorId.role(role.title, index);
         passages.push({
-          id: `role-${slug(role.title)}-${index + 1}`,
+          id,
           title: `${role.title}, ${employer.name} (${role.dates})`,
           body: `${role.title} at ${employer.name}, ${employer.location}, ${role.dates}. ${highlights.join(" ")}`,
           tags: "experience role employment",
-          url: `${resume}#resume-experience-heading`,
+          url: `${resume}#${id}`,
         });
       });
     }
   }
 
   for (const group of resumeContent.skillGroups) {
+    const id = anchorId.skill(group.title);
     passages.push({
-      id: `skills-${slug(group.title)}`,
+      id,
       title: `Technical skills: ${group.title}`,
       body: `${group.title}: ${group.skills}.`,
       tags: "skills tools technologies",
-      url: `${resume}#resume-skills-heading`,
+      url: `${resume}#${id}`,
     });
   }
 
   for (const project of resumeContent.selectedProjects) {
+    const id = anchorId.resumeProject(project.title);
     passages.push({
-      id: `resume-project-${slug(project.title)}`,
+      id,
       title: `Selected technical project: ${project.title}`,
       body: `${project.title}. ${project.description}`,
       tags: "project applied work",
-      url: `${resume}#resume-projects-heading`,
+      url: `${resume}#${id}`,
     });
   }
 
@@ -88,36 +84,38 @@ export function buildKnowledgePassages(): KnowledgePassage[] {
     tags: "awards recognition",
     url: `${resume}#resume-recognition-heading`,
   }, {
-    id: "about-overview",
+    id: ABOUT_OVERVIEW_ID,
     title: "Background and current direction",
     body: `${siteContent.statement} ${siteContent.introduction} ${siteContent.perspective} ${siteContent.availability}`,
     tags: "about overview roles availability",
-    url: "/about",
+    url: `/about#${ABOUT_OVERVIEW_ID}`,
   }, {
-    id: "working-principles",
+    id: WORKING_PRINCIPLES_ID,
     title: "Working principles",
     body: workingPrinciples.join(" "),
     tags: "principles approach values",
-    url: "/about",
+    url: `/about#${WORKING_PRINCIPLES_ID}`,
   });
 
   for (const area of experienceAreas) {
+    const id = anchorId.area(area.title);
     passages.push({
-      id: `area-${slug(area.title)}`,
+      id,
       title: `Experience area: ${area.title}`,
       body: `${area.description} ${area.evidence.join(" ")}`,
       tags: "experience area",
-      url: "/about",
+      url: `/about#${id}`,
     });
   }
 
   for (const milestone of careerMilestones) {
+    const id = anchorId.career(milestone.title);
     passages.push({
-      id: `career-${slug(milestone.title)}`,
+      id,
       title: `Career progression: ${milestone.title} (${milestone.period})`,
       body: `${milestone.period}: ${milestone.roles}. ${milestone.description}`,
       tags: "career progression history",
-      url: "/about#career-timeline-heading",
+      url: `/about#${id}`,
     });
   }
 

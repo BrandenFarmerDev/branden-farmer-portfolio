@@ -9,7 +9,7 @@ interface ProjectCardProps {
 
 export function ProjectCard({ project, showOutlineLink = true }: ProjectCardProps) {
   return (
-    <article className={`project-card accent-${project.accent}`} id={project.id}>
+    <article className="project-card" id={project.id}>
       <div className="project-meta">
         <span>{project.category}</span>
         <span className="status-label">{project.status}</span>

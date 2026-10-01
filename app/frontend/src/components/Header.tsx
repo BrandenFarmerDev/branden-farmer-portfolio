@@ -1,4 +1,4 @@
-import { CodeXml, Menu, Moon, Sun, X } from "lucide-react";
+import { CodeXml, Menu, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { siteContent } from "../content/site";
@@ -10,21 +10,44 @@ const navigation = [
   ["Contact", "/contact"],
 ] as const;
 
-function getInitialTheme(): "light" | "dark" {
-  const savedTheme = localStorage.getItem("portfolio-theme");
-  if (savedTheme === "light" || savedTheme === "dark") return savedTheme;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+type ThemePreference = "light" | "dark" | "system";
+
+// Keep the storage key in sync with the pre-paint script in index.html.
+const THEME_STORAGE_KEY = "portfolio-theme";
+
+function getInitialPreference(): ThemePreference {
+  try {
+    const saved = localStorage.getItem(THEME_STORAGE_KEY);
+    if (saved === "light" || saved === "dark" || saved === "system") return saved;
+  } catch {
+    // Storage can be blocked; fall back to the system theme.
+  }
+  return "system";
 }
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [theme, setTheme] = useState(getInitialTheme);
+  const [themePreference, setThemePreference] = useState(getInitialPreference);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("portfolio-theme", theme);
-  }, [theme]);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themePreference);
+    } catch {
+      // The preference still applies for this page view.
+    }
+    const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
+    const applyTheme = () => {
+      document.documentElement.dataset.theme = themePreference === "system"
+        ? (systemDark.matches ? "dark" : "light")
+        : themePreference;
+    };
+
+    applyTheme();
+    if (themePreference !== "system") return;
+    systemDark.addEventListener("change", applyTheme);
+    return () => systemDark.removeEventListener("change", applyTheme);
+  }, [themePreference]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -91,15 +114,17 @@ export function Header() {
             <CodeXml aria-hidden="true" size={17} />
             <span className="header-github-label">GitHub</span>
           </a>
-          <button
-            className="icon-button theme-button"
-            type="button"
-            aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-            title={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-            onClick={() => setTheme((current) => (current === "light" ? "dark" : "light"))}
+          <label className="sr-only" htmlFor="theme-select">Color theme</label>
+          <select
+            id="theme-select"
+            className="theme-select"
+            value={themePreference}
+            onChange={(event) => setThemePreference(event.target.value as ThemePreference)}
           >
-            {theme === "light" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
-          </button>
+            <option value="system">System theme</option>
+            <option value="light">Light theme</option>
+            <option value="dark">Dark theme</option>
+          </select>
         </nav>
       </div>
     </header>

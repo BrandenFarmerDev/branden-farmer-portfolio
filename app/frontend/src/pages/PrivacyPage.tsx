@@ -22,6 +22,7 @@ const sections = [
     title: "Ask Branden",
     items: [
       "Questions and pasted job descriptions are used only to answer the request and are not stored.",
+      "Your most recent answer is kept in this browser tab's session storage so the Back button can restore it. It is cleared when the tab closes and is never sent to the server.",
       "Answers are generated only from published portfolio content, never from contact messages, bookings, or other private data.",
       "A signed, anonymous cookie and a daily keyed hash of your network address enforce the daily answer allowance. These counters are deleted after 7 days.",
       "Aggregate usage totals without questions or network addresses are kept for 90 days.",

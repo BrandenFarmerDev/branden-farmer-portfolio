@@ -1,8 +1,10 @@
 import { Download, Mail, MapPin, Phone } from "lucide-react";
 import profilePhoto from "../assets/profile-photo.webp";
 import { PageIntro } from "../components/PageIntro";
+import { anchorId, chunk, ROLE_HIGHLIGHT_CHUNK } from "../content/anchors";
 import { resumeContent, type ResumeDetail } from "../content/resume";
 import { siteContent } from "../content/site";
+import { useHashTarget } from "../lib/useHashTarget";
 
 interface DetailListProps {
   items: readonly ResumeDetail[];
@@ -26,6 +28,8 @@ function DetailList({ items }: DetailListProps) {
 }
 
 export function ResumePage() {
+  useHashTarget();
+
   return (
     <>
       <PageIntro
@@ -94,7 +98,14 @@ export function ResumePage() {
                         <span>{role.dates}</span>
                       </div>
                       <ul>
-                        {role.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
+                        {chunk(role.highlights, ROLE_HIGHLIGHT_CHUNK).flatMap((highlights, chunkIndex) => {
+                          const passageId = anchorId.role(role.title, chunkIndex);
+                          return highlights.map((highlight, offset) => (
+                            <li key={highlight} id={offset === 0 ? passageId : undefined} data-passage={passageId}>
+                              {highlight}
+                            </li>
+                          ));
+                        })}
                       </ul>
                     </article>
                   ))}
@@ -108,7 +119,7 @@ export function ResumePage() {
             <h2 id="resume-skills-heading">Technical skills</h2>
             <dl className="resume-skill-groups">
               {resumeContent.skillGroups.map((group) => (
-                <div key={group.title}>
+                <div key={group.title} id={anchorId.skill(group.title)}>
                   <dt>{group.title}</dt>
                   <dd>{group.skills}</dd>
                 </div>
@@ -121,7 +132,7 @@ export function ResumePage() {
             <h2 id="resume-projects-heading">Selected technical projects</h2>
             <div className="resume-project-list">
               {resumeContent.selectedProjects.map((project) => (
-                <article key={project.title}>
+                <article key={project.title} id={anchorId.resumeProject(project.title)}>
                   <h3>{project.title}</h3>
                   <p>{project.description}</p>
                 </article>
