@@ -4,7 +4,9 @@ import { runInNewContext } from "node:vm";
 import { describe, expect, it } from "vitest";
 
 const html = readFileSync("index.html", "utf8");
-const script = html.match(/<script>([\s\S]*?)<\/script>/)![1];
+const sourceDocument = new DOMParser().parseFromString(html, "text/html");
+const script = sourceDocument.querySelector("head > script:not([src])")?.textContent;
+if (!script) throw new Error("The pre-paint theme script is missing from index.html.");
 
 describe("pre-paint theme", () => {
   it.each([
