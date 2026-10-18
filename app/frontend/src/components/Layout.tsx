@@ -24,6 +24,10 @@ export function Layout() {
         title: "About | Branden Farmer",
         description: "Branden Farmer's progression from manufacturing and planning into business intelligence and application development.",
       },
+      "/projects/grid-operations": {
+        title: "Grid Operations Command Center | Branden Farmer",
+        description: "A synthetic utility operations case study with an audited Power BI model, clear KPI definitions, and a fixed simulation clock.",
+      },
       "/resume": {
         title: "Résumé | Branden Farmer",
         description: "Digital résumé covering operations, planning, business intelligence, data engineering, automation, and application development.",
@@ -48,6 +52,9 @@ export function Layout() {
     const meta = routeMeta[location.pathname] ?? routeMeta["/"];
     document.title = meta.title;
     document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute("content", meta.description);
+    const pageUrl = `https://brandenfarmer.com${location.pathname === "/" ? "/" : location.pathname}`;
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute("href", pageUrl);
+    document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute("content", pageUrl);
 
     if (initialRenderRef.current) initialRenderRef.current = false;
     // Pages focus their own hash target; React runs page effects before this one.

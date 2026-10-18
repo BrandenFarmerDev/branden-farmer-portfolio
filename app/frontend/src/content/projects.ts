@@ -40,4 +40,17 @@ export const projects: ProjectSummary[] = [
     technologies: ["React", "TypeScript", "Cloudflare Workers", "D1", "Lightweight charts"],
     accent: "gold",
   },
+  {
+    id: "grid-operations",
+    title: "Grid Operations Command Center",
+    category: "Operations",
+    description:
+      "A fictional utility operations case study that connects outage, crew, weather, and hourly impact data for investigation and reliability review.",
+    problem:
+      "Operations leaders need a consistent view of active outage impact and restoration work while keeping current-impact measures separate from hourly history.",
+    role: "Business analysis, KPI definition, data modeling, SQL validation, and portfolio presentation",
+    status: "Case study · synthetic model",
+    technologies: ["SQL Server", "Power BI", "Synthetic data"],
+    accent: "teal",
+  },
 ];

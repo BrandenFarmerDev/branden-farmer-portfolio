@@ -17,9 +17,13 @@
     "duplication": "jscpd app packages --config jscpd.json",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "audit": "npm audit --audit-level=moderate",
-    "audit:production": "npm audit --omit=dev --audit-level=high",
-    "quality": "npm run lint && npm run test:coverage && npm run duplication && npm run typecheck && npm run build && npm run audit"
+    "audit": "npm audit --audit-level=low",
+    "audit:production": "npm audit --omit=dev --audit-level=low",
+    "test:hooks": "node --test scripts/pre-push.test.mjs",
+    "test:security-scan": "node --test scripts/security-scan.test.mjs",
+    "secrets:source": "gitleaks dir --config .gitleaks.toml --redact --no-banner --no-color .",
+    "secrets:build": "gitleaks dir --config .gitleaks.toml --redact --no-banner --no-color app/frontend/dist",
+    "quality": "npm run lint && npm run test:hooks && npm run test:security-scan && npm run secrets:source && npm run test:coverage && npm run duplication && npm run typecheck && npm run build && npm run secrets:build && npm run audit"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

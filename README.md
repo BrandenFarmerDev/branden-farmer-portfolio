@@ -30,9 +30,16 @@ npm run dev:backend
 
 ## Validation
 
+The quality command and pre-push hook require Gitleaks CLI 8.29.1. Download the 8.29.1 archive and its `checksums.txt` from the official Gitleaks release, verify the archive's SHA-256 against that file, and extract it. In the same PowerShell session used for quality checks and `git push`, add the directory containing `gitleaks.exe` to `PATH`; Git hooks inherit that environment. Confirm `gitleaks version` reports `8.29.1` before continuing. For example:
+
 ```powershell
-npm run quality
+$gitleaksDirectory = "C:\path\to\gitleaks-8.29.1"
+$env:Path = "$gitleaksDirectory;$env:Path"
+gitleaks version
+npm.cmd run quality
 ```
+
+CI installs the pinned release automatically. If Gitleaks is unavailable or its version is incorrect, the local quality command and pre-push hook fail; do not skip either gate.
 
 `npm run quality` runs linting, coverage-enforced tests, maintained-code duplication detection, TypeScript checks, production builds, and a production-dependency audit. The current coverage floor is 85% for lines, statements, functions, and branches. The backend build uses Wrangler's dry-run mode and does not deploy anything.
 

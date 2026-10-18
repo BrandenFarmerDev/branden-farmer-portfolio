@@ -4,6 +4,12 @@ import { afterEach, beforeEach, vi } from "vitest";
 
 beforeEach(() => {
   localStorage.clear();
+  if (!document.querySelector('link[rel="canonical"]')) {
+    document.head.insertAdjacentHTML("beforeend", '<link rel="canonical" href="https://brandenfarmer.com/">');
+  }
+  if (!document.querySelector('meta[property="og:url"]')) {
+    document.head.insertAdjacentHTML("beforeend", '<meta property="og:url" content="https://brandenfarmer.com/">');
+  }
   vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
     new Response(JSON.stringify({ status: "ok", service: "portfolio-api", timestamp: new Date().toISOString() }), {
       status: 200,

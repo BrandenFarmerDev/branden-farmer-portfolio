@@ -118,7 +118,9 @@ describe("AskPage", () => {
     renderPage();
 
     expect(await screen.findByText(/shared answer allowance for your network/)).toBeInTheDocument();
+    await waitFor(() => expect(mocks.getAskStatus).toHaveBeenCalledTimes(1));
     act(() => window.dispatchEvent(new Event("focus")));
+    await waitFor(() => expect(mocks.getAskStatus).toHaveBeenCalledTimes(2));
     expect(await screen.findByText("0 of 5 used")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ask Branden" })).toBeEnabled();
   });

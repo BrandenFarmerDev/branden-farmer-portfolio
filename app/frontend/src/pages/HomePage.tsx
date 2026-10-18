@@ -51,12 +51,18 @@ export function HomePage() {
         <div className="section-heading">
           <div>
             <p className="eyebrow">Selected work</p>
-            <h2 id="selected-work-heading">Three systems in development</h2>
+            <h2 id="selected-work-heading">Selected projects and case studies</h2>
           </div>
           <Link className="text-link" to="/work">View all work <ArrowRight aria-hidden="true" size={16} /></Link>
         </div>
         <div className="project-grid">
-          {projects.map((project) => <ProjectCard key={project.id} project={project} />)}
+          {projects.map((project) => (
+            <ProjectCard
+              key={project.id}
+              project={project}
+              detailsPath={project.id === "grid-operations" ? "/projects/grid-operations" : undefined}
+            />
+          ))}
         </div>
       </section>
 

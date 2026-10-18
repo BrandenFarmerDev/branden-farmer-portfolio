@@ -5,6 +5,7 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: "jsdom",
+    maxWorkers: 1,
     setupFiles: ["./src/test/setup.ts"],
     coverage: {
       provider: "v8",
@@ -13,9 +14,7 @@ export default defineConfig({
       exclude: [
         "src/**/*.test.{ts,tsx}",
         "src/test/**",
-        "src/main.tsx",
         "src/vite-env.d.ts",
-        "src/content/**",
       ],
       thresholds: {
         lines: 85,

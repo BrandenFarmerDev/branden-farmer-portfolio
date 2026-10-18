@@ -10,6 +10,7 @@ const ContactPage = lazy(() => import("./pages/ContactPage").then((module) => ({
 const AskPage = lazy(() => import("./pages/AskPage").then((module) => ({ default: module.AskPage })));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
 const OwnerPage = lazy(() => import("./pages/OwnerPage").then((module) => ({ default: module.OwnerPage })));
+const GridOperationsPage = lazy(() => import("./pages/GridOperationsPage").then((module) => ({ default: module.GridOperationsPage })));
 
 function RouteFallback() {
   return <p className="route-loading" role="status">Loading page…</p>;
@@ -21,6 +22,7 @@ export function App() {
       <Route element={<Layout />}>
         <Route element={<Suspense fallback={<RouteFallback />}><HomePage /></Suspense>} index />
         <Route path="work" element={<Suspense fallback={<RouteFallback />}><WorkPage /></Suspense>} />
+        <Route path="projects/grid-operations" element={<Suspense fallback={<RouteFallback />}><GridOperationsPage /></Suspense>} />
         <Route path="about" element={<Suspense fallback={<RouteFallback />}><AboutPage /></Suspense>} />
         <Route path="resume" element={<Suspense fallback={<RouteFallback />}><ResumePage /></Suspense>} />
         <Route path="contact" element={<Suspense fallback={<RouteFallback />}><ContactPage /></Suspense>} />

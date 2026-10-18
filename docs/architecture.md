@@ -30,7 +30,7 @@ GitHub and LinkedIn are ordinary external links. Interview scheduling uses Cal.c
 
 Page modules are loaded by route so the contact form and Cal.com integration are not part of the initial home-page chunk. The profile image is a reviewable, optimized WebP source asset. Cloudflare Pages copies `_headers`, `robots.txt`, `sitemap.xml`, and the web app manifest from the public directory into the build output.
 
-All three public projects remain labeled `Prototype - in development`. Synthetic data is required for future demos.
+The three application projects remain labeled `Prototype - in development`. The Grid Operations Command Center is a synthetic-data case study at `/projects/grid-operations`. Its published Power BI Import snapshot contains 17 model tables and eight report pages, and its 15 SQL Import rowsets were compared with their current source views. At the fixed 2026-10-12 12:00 Pacific simulation time, the snapshot contains 800 incidents, 20 active incidents, and 16,435 customers currently out. It distinguishes 24 registered facilities, six distinct impacted facilities, five of six facilities with current crew coverage, and seven incident-facility impact links. The model contains 24 latest crew positions and 82 map points; the separate SQL history contains 937 position observations and 192 crew assignments. Map locations and KPI targets are illustrative, not live GPS or network topology. The interactive report remains unavailable until a valid public URL is configured. `VITE_POWER_BI_EMBED_URL` is checked at frontend build and runtime and accepts only a Power BI Publish to web URL on `app.powerbi.com`.
 
 ## API behavior
 

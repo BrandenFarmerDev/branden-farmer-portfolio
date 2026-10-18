@@ -20,6 +20,18 @@ export default tseslint.config(
     files: ["**/*.{ts,tsx}"],
   })),
   {
+    files: ["app/**/*.{js,mjs,ts,tsx}", "packages/**/*.{js,mjs,ts,tsx}", "scripts/**/*.{js,mjs,ts,tsx}"],
+    rules: {
+      "no-eval": "error",
+      "no-implied-eval": "error",
+      "no-new-func": "error",
+      "no-proto": "error",
+      "no-prototype-builtins": "error",
+      "no-script-url": "error",
+      "no-unsafe-optional-chaining": "error",
+    },
+  },
+  {
     files: ["app/frontend/**/*.{ts,tsx}"],
     languageOptions: {
       globals: {

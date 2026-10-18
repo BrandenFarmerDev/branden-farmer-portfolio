@@ -54,6 +54,23 @@ describe("portfolio routes", () => {
     expect(screen.getByRole("link", { name: "Contact Branden or book time" })).toHaveAttribute("href", "/contact");
   });
 
+  it("shows the grid case study and a clear placeholder when no public report URL is configured", async () => {
+    const { unmount } = renderRoute("/projects/grid-operations");
+    expect(await screen.findByRole("heading", { name: "Grid Operations Command Center" })).toBeInTheDocument();
+    expect(screen.getByText("16,435")).toBeInTheDocument();
+    expect(screen.getByText("5 of 6")).toBeInTheDocument();
+    expect(screen.getByText("24 · 82")).toBeInTheDocument();
+    expect(screen.getByText(/public Power BI report link is not configured/i)).toBeInTheDocument();
+    expect(document.title).toBe("Grid Operations Command Center | Branden Farmer");
+    expect(document.querySelector('link[rel="canonical"]')).toHaveAttribute("href", "https://brandenfarmer.com/projects/grid-operations");
+    expect(document.querySelector('meta[property="og:url"]')).toHaveAttribute("content", "https://brandenfarmer.com/projects/grid-operations");
+    expect(screen.queryByTitle("Sierra North Energy synthetic grid operations report")).not.toBeInTheDocument();
+    unmount();
+
+    renderRoute("/about");
+    expect(await screen.findByRole("heading", { name: "From the workbench to connected systems" })).toBeInTheDocument();
+  });
+
   it("links home project summaries to hash targets without self-links on Work", async () => {
     const { unmount } = renderRoute("/");
     const outlineLinks = await screen.findAllByRole("link", { name: /View project outline/ });
