@@ -11,7 +11,7 @@ Use this checklist for a reviewed preview and again before a production release.
 
 ## Deployment readiness
 
-- [ ] The GitHub `production` environment permits only `main` and contains both Cloudflare environment secrets and all three documented public variables.
+- [ ] The GitHub `production` environment permits only `main` and contains both Cloudflare environment secrets and the required public variables; any configured `VITE_POWER_BI_EMBED_URL` is a validated Power BI Publish to web URL.
 - [ ] The Cloudflare Pages Direct Upload project is named `branden-farmer-portfolio`; Cloudflare Pages Git integration is not also enabled.
 - [ ] `main` requires a pull request plus the `Quality gates` and `Analyze JavaScript and TypeScript` checks, with force pushes and direct pushes blocked.
 - [ ] The Pages custom domain is `brandenfarmer.com`, `www` redirects to it, and the Worker custom domain is `api.brandenfarmer.com`.
@@ -29,7 +29,7 @@ Use this checklist for a reviewed preview and again before a production release.
 
 - [ ] About and digital résumé facts match the approved résumé and design source.
 - [ ] GitHub profile, portfolio source, LinkedIn, email, PDF, and Cal.com destinations are correct.
-- [ ] Project cards still say `Prototype - in development` and do not imply shipped outcomes.
+- [ ] The three application projects remain labelled `Prototype - in development`; Grid Operations links to its synthetic case study and distinguishes the audited imported-model snapshot from historical SQL observations. Configure its iframe and direct link only with a validated Microsoft Publish to web URL after the full public-data review; otherwise keep the case study available with an honest unavailable message.
 - [ ] Ask Branden returns source-linked generated answers for supported questions, declines unsupported claims, and falls back to evidence-only results if generation is unavailable or paused.
 - [ ] Each Ask evidence link opens the exact résumé or About passage, highlights it, and moves focus to it; Back restores the previous answer.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).

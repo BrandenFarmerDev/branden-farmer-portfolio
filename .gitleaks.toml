@@ -1,0 +1,23 @@
+title = "Portfolio secret scan"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Local runtime configuration and generated caches are outside release-eligible source."
+condition = "OR"
+paths = [
+  '''(?i)(^|/)\.dev\.vars$''',
+  '''(?i)(^|/)\.wrangler/''',
+  '''(?i)(^|/)node_modules/''',
+  '''(?i)(^|/)coverage/''',
+  '''(?i)(^|/)reports/''',
+]
+
+[[allowlists]]
+description = "Only the two reviewed Cloudflare Access audience identifiers are excluded from the generic API-key rule."
+targetRules = [ "generic-api-key" ]
+regexTarget = "secret"
+regexes = [
+  '''^14fecc1ea27133e0e949f3ed09435cc162fd35f6e44881942148b97dde024f9b$''',
+  '''^8dca71ab16ffff43fbb436291bae7b9756a4495a5e631c39ebea4226320df564$''',
+]

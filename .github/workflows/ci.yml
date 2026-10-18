@@ -24,6 +24,19 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
+      - name: Install checksum-verified Gitleaks
+        shell: bash
+        run: |
+          version=8.29.1
+          archive="gitleaks_${version}_linux_x64.tar.gz"
+          url="https://github.com/gitleaks/gitleaks/releases/download/v${version}/${archive}"
+          curl --fail --show-error --silent --location "$url" --output "$RUNNER_TEMP/$archive"
+          echo "e4eb209d04e20339d77122a3bdf9cd41351255cfb27ebcb75e85325e04f88924  $RUNNER_TEMP/$archive" | sha256sum --check --status
+          mkdir -p "$RUNNER_TEMP/gitleaks"
+          tar -xzf "$RUNNER_TEMP/$archive" -C "$RUNNER_TEMP/gitleaks" gitleaks
+          echo "GITLEAKS_BINARY=$RUNNER_TEMP/gitleaks/gitleaks" >> "$GITHUB_ENV"
+          echo "$RUNNER_TEMP/gitleaks" >> "$GITHUB_PATH"
+
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
@@ -32,6 +45,15 @@ jobs:
 
       - name: Install locked dependencies
         run: npm ci
+
+      - name: Test the installed pre-push gate
+        run: npm run test:hooks
+
+      - name: Test secret scanner failure path
+        run: npm run test:security-scan
+
+      - name: Scan release-eligible source for secrets
+        run: npm run secrets:source
 
       - name: Lint
         run: npm run lint
@@ -47,6 +69,9 @@ jobs:
 
       - name: Build production artifacts
         run: npm run build
+
+      - name: Scan built frontend artifact for secrets
+        run: npm run secrets:build
 
       - name: Validate approved knowledge corpus
         working-directory: app/backend
@@ -100,6 +125,7 @@ jobs:
           CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_POWER_BI_EMBED_URL: ${{ vars.VITE_POWER_BI_EMBED_URL }}
         run: |
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Missing production secret CLOUDFLARE_ACCOUNT_ID"; exit 1; }
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Missing production secret CLOUDFLARE_API_TOKEN"; exit 1; }
@@ -141,6 +167,7 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_POWER_BI_EMBED_URL: ${{ vars.VITE_POWER_BI_EMBED_URL }}
         run: npm run build --workspace @portfolio/frontend
 
       - name: Deploy production Worker
@@ -259,6 +286,7 @@ jobs:
         env:
           VITE_API_BASE_URL: https://api-preview.brandenfarmer.com
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
+          VITE_POWER_BI_EMBED_URL: ${{ vars.VITE_POWER_BI_EMBED_URL }}
         run: |
           npm run build --workspace @portfolio/frontend
           (cd app/backend && node scripts/build-knowledge-sql.ts .generated/knowledge.sql)

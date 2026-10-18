@@ -677,6 +677,210 @@ h3 {
   color: var(--ink-soft);
 }
 
+.grid-case-study {
+  display: grid;
+  width: min(calc(100% - 40px), 960px);
+  max-width: 960px;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 36px;
+}
+
+.grid-case-study > * {
+  min-width: 0;
+}
+
+.grid-simulation-notice {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 16px 18px;
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius);
+  background: var(--info-surface);
+  color: var(--info);
+  font-size: var(--text-md);
+}
+
+.grid-baseline {
+  display: grid;
+  min-width: 0;
+  padding: 24px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  gap: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.grid-baseline h2 {
+  margin-bottom: 8px;
+  font-size: var(--text-h2);
+}
+
+.grid-baseline p:last-child {
+  margin-bottom: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+}
+
+.grid-baseline dl {
+  display: grid;
+  min-width: 0;
+  margin: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.grid-baseline dl > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.grid-baseline dt {
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.grid-baseline dd {
+  margin: 4px 0 0;
+  font-size: var(--text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.grid-study-section {
+  max-width: 820px;
+}
+
+.grid-study-section h2 {
+  margin-bottom: 12px;
+  font-size: var(--text-h2);
+}
+
+.grid-study-section > p:not(.eyebrow) {
+  color: var(--ink-soft);
+  font-size: var(--text-lg);
+}
+
+.grid-architecture-list,
+.grid-limits-list {
+  display: grid;
+  padding-left: 22px;
+  margin: 0;
+  gap: 14px;
+  color: var(--ink-soft);
+}
+
+.grid-architecture-list li {
+  padding-left: 4px;
+}
+
+.grid-architecture-list strong,
+.grid-architecture-list span {
+  display: block;
+}
+
+.grid-architecture-list strong {
+  margin-bottom: 3px;
+  color: var(--ink);
+}
+
+.grid-kpi-list {
+  margin: 0;
+}
+
+.grid-kpi-list > div {
+  display: grid;
+  padding: 14px 0;
+  grid-template-columns: minmax(190px, 0.36fr) minmax(0, 1fr);
+  gap: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.grid-kpi-list dt {
+  color: var(--ink);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.grid-kpi-list dd {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+}
+
+.grid-report-placeholder {
+  display: grid;
+  min-height: 240px;
+  padding: 28px;
+  align-content: center;
+  gap: 8px;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.grid-sql-example {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 16px;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.grid-report-placeholder .eyebrow,
+.grid-report-placeholder p:last-child {
+  margin-bottom: 0;
+}
+
+.grid-report-placeholder p:last-child {
+  max-width: 660px;
+  color: var(--ink-soft);
+}
+
+.grid-report-frame {
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 9;
+  min-height: 450px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.grid-report-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.grid-study-navigation {
+  display: flex;
+  padding-top: 22px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.grid-study-navigation .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
 .split-layout,
 .contact-layout,
 .ask-layout,
@@ -1692,6 +1896,9 @@ h3 {
 
   .practice-map { max-width: 560px; }
   .project-grid { grid-template-columns: 1fr; }
+  .grid-kpi-list > div { grid-template-columns: 1fr; gap: 6px; }
+  .grid-baseline { grid-template-columns: 1fr; }
+  .grid-sql-example { font-size: var(--text-xs); }
 
   .resume-page-layout {
     grid-template-columns: minmax(200px, 230px) minmax(0, 1fr);
@@ -1727,6 +1934,8 @@ h3 {
   .project-card { padding: 20px; }
   .project-meta { flex-direction: column; }
   .page-intro { padding-block: 40px 32px; }
+  .grid-baseline { padding: 20px; }
+  .grid-baseline dl { grid-template-columns: 1fr; }
   .page-intro h1 { font-size: clamp(1.75rem, 8vw, 2.125rem); }
   .split-layout, .contact-layout, .ask-layout, .resume-layout, .resume-page-layout { grid-template-columns: 1fr; gap: 32px; }
   .resume-sidebar { position: static; }

@@ -39,7 +39,12 @@ export function WorkPage() {
         {visibleProjects.length > 0 ? (
           <div className="project-grid work-grid">
             {visibleProjects.map((project) => (
-              <ProjectCard key={project.id} project={project} showOutlineLink={false} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                showOutlineLink={false}
+                detailsPath={project.id === "grid-operations" ? "/projects/grid-operations" : undefined}
+              />
             ))}
           </div>
         ) : (

@@ -5,9 +5,10 @@ import type { ProjectSummary } from "@portfolio/shared";
 interface ProjectCardProps {
   project: ProjectSummary;
   showOutlineLink?: boolean;
+  detailsPath?: string;
 }
 
-export function ProjectCard({ project, showOutlineLink = true }: ProjectCardProps) {
+export function ProjectCard({ project, showOutlineLink = true, detailsPath }: ProjectCardProps) {
   return (
     <article className="project-card" id={project.id}>
       <div className="project-meta">
@@ -29,9 +30,9 @@ export function ProjectCard({ project, showOutlineLink = true }: ProjectCardProp
       <ul className="technology-list" aria-label="Technologies">
         {project.technologies.map((technology) => <li key={technology}>{technology}</li>)}
       </ul>
-      {showOutlineLink ? (
-        <Link className="project-link" to={`/work#${project.id}`}>
-          View project outline <ArrowUpRight aria-hidden="true" size={17} />
+      {showOutlineLink || detailsPath ? (
+        <Link className="project-link" to={detailsPath ?? `/work#${project.id}`}>
+          {detailsPath ? "Read case study" : "View project outline"} <ArrowUpRight aria-hidden="true" size={17} />
         </Link>
       ) : null}
     </article>
