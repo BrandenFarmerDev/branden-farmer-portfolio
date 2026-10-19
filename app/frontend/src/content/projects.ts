@@ -1,5 +1,11 @@
 import type { ProjectSummary } from "@portfolio/shared";
 
+/** Projects with a dedicated page; the label names what the visitor will find there. */
+export const projectLinks: Record<string, { path: string; label: string }> = {
+  "grid-operations": { path: "/projects/grid-operations", label: "Read case study" },
+  "job-search-intelligence": { path: "/projects/job-search-intelligence", label: "Try the interactive demo" },
+};
+
 export const projects: ProjectSummary[] = [
   {
     id: "job-search-intelligence",
@@ -10,8 +16,8 @@ export const projects: ProjectSummary[] = [
     problem:
       "Important application events are scattered across a mailbox, making follow-up and outcome analysis difficult without careful evidence linking.",
     role: "Product design, data model, workflow design, and full-stack implementation",
-    status: "Prototype - in development",
-    technologies: ["React", "TypeScript", "Microsoft Graph", "Cloudflare Workers", "D1"],
+    status: "Interactive demo · synthetic data",
+    technologies: ["React", "TypeScript", "Gmail API", "Cloudflare Workers", "D1"],
     accent: "teal",
   },
   {

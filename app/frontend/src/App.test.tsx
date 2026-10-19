@@ -45,7 +45,7 @@ describe("portfolio routes", () => {
 
   it("keeps unfinished work labelled and keeps owner tools out of navigation", async () => {
     const { unmount } = renderRoute("/work");
-    expect(await screen.findAllByText("Prototype - in development")).toHaveLength(3);
+    expect(await screen.findAllByText("Prototype - in development")).toHaveLength(2);
     expect(screen.queryByRole("link", { name: /Owner/ })).not.toBeInTheDocument();
     unmount();
 
@@ -74,13 +74,33 @@ describe("portfolio routes", () => {
   it("links home project summaries to hash targets without self-links on Work", async () => {
     const { unmount } = renderRoute("/");
     const outlineLinks = await screen.findAllByRole("link", { name: /View project outline/ });
-    expect(outlineLinks).toHaveLength(3);
-    expect(outlineLinks[0]).toHaveAttribute("href", "/work#job-search-intelligence");
+    expect(outlineLinks).toHaveLength(2);
+    expect(outlineLinks[0]).toHaveAttribute("href", "/work#municipal-capital-project-tracker");
     unmount();
 
     renderRoute("/work");
     await screen.findByRole("heading", { name: "Tools shaped around real decisions" });
     expect(screen.queryByRole("link", { name: /View project outline/ })).not.toBeInTheDocument();
+  });
+
+  it("offers the interactive Job Search Intelligence demo from Home and Work as a public, labelled demo", async () => {
+    const { unmount } = renderRoute("/");
+    expect(await screen.findByRole("link", { name: /Try the interactive demo/ })).toHaveAttribute("href", "/projects/job-search-intelligence");
+    unmount();
+
+    renderRoute("/work");
+    expect(await screen.findByRole("link", { name: /Try the interactive demo/ })).toHaveAttribute("href", "/projects/job-search-intelligence");
+    expect(screen.getByText("Interactive demo · synthetic data")).toBeInTheDocument();
+  });
+
+  it("serves the demo outside the portfolio layout without any network request", async () => {
+    renderRoute("/projects/job-search-intelligence/review");
+    // The demo is a separate lazy chunk, which compiles slowly on a cold, instrumented run.
+    expect(await screen.findByRole("heading", { level: 1, name: "Review" }, { timeout: 15_000 })).toBeInTheDocument();
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+    expect(screen.queryByRole("link", { name: "Skip to main content" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Branden Farmer on GitHub/ })).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
   });
 
   it("scrolls a hash-targeted project into view", async () => {

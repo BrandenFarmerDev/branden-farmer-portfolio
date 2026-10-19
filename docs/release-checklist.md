@@ -1,6 +1,6 @@
 # Core portfolio release checklist
 
-Use this checklist for a reviewed preview and again before a production release. The three project demos are outside the current release scope and must remain labelled as prototypes. Evaluate generated Ask answers in preview before enabling them in production.
+Use this checklist for a reviewed preview and again before a production release. The Job Search Intelligence demo is in scope as a client-only, fictional-data demo; the other two project demos are outside the current release scope and must remain labelled as prototypes. Evaluate generated Ask answers in preview before enabling them in production.
 
 ## Automated gates
 
@@ -29,11 +29,12 @@ Use this checklist for a reviewed preview and again before a production release.
 
 - [ ] About and digital résumé facts match the approved résumé and design source.
 - [ ] GitHub profile, portfolio source, LinkedIn, email, PDF, and Cal.com destinations are correct.
-- [ ] The three application projects remain labelled `Prototype - in development`; Grid Operations links to its synthetic case study and distinguishes the audited imported-model snapshot from historical SQL observations. Configure its iframe and direct link only with a validated Microsoft Publish to web URL after the full public-data review; otherwise keep the case study available with an honest unavailable message.
+- [ ] Municipal Capital Project Tracker and Operational Review Workspace remain labelled `Prototype - in development`; Job Search Intelligence is labelled `Interactive demo · synthetic data`; Grid Operations links to its synthetic case study and distinguishes the audited imported-model snapshot from historical SQL observations. Configure its iframe and direct link only with a validated Microsoft Publish to web URL after the full public-data review; otherwise keep the case study available with an honest unavailable message.
 - [ ] Ask Branden returns source-linked generated answers for supported questions, declines unsupported claims, and falls back to evidence-only results if generation is unavailable or paused.
 - [ ] Each Ask evidence link opens the exact résumé or About passage, highlights it, and moves focus to it; Back restores the previous answer.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).
 - [ ] Canonical URL, sitemap, and metadata use `https://brandenfarmer.com`.
+- [ ] Job Search Intelligence demo smoke test on the deployed site: `/projects/job-search-intelligence` and a nested route (for example `/review`) load directly without a login; a browser network inventory during search, add, edit, merge, review, sync, delete, reset and CSV export shows no request beyond static assets; searched text never appears in the address bar; the Back to portfolio link works and portfolio pages show no demo styling; the private Job Search Intelligence application remains behind Cloudflare Access. Roll back with Cloudflare's rollback controls and a reviewed revert, as described in the deployment guide.
 
 ## Core browser flows
 
