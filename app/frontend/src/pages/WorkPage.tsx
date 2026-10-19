@@ -3,7 +3,7 @@ import { useState } from "react";
 import { LinkOrPlaceholder } from "../components/LinkOrPlaceholder";
 import { PageIntro } from "../components/PageIntro";
 import { ProjectCard } from "../components/ProjectCard";
-import { projects } from "../content/projects";
+import { projectLinks, projects } from "../content/projects";
 import { githubContent, siteContent } from "../content/site";
 import { useHashTarget } from "../lib/useHashTarget";
 
@@ -43,7 +43,8 @@ export function WorkPage() {
                 key={project.id}
                 project={project}
                 showOutlineLink={false}
-                detailsPath={project.id === "grid-operations" ? "/projects/grid-operations" : undefined}
+                detailsPath={projectLinks[project.id]?.path}
+                detailsLabel={projectLinks[project.id]?.label}
               />
             ))}
           </div>

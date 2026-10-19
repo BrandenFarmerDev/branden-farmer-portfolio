@@ -111,7 +111,7 @@ export interface OwnerSettings {
   aiEnabled: boolean;
 }
 
-export type ProjectStatus = "Prototype - in development" | "Case study · synthetic model";
+export type ProjectStatus = "Prototype - in development" | "Case study · synthetic model" | "Interactive demo · synthetic data";
 
 export interface ProjectSummary {
   id: string;

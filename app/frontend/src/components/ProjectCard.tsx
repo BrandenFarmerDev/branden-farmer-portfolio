@@ -6,9 +6,10 @@ interface ProjectCardProps {
   project: ProjectSummary;
   showOutlineLink?: boolean;
   detailsPath?: string;
+  detailsLabel?: string;
 }
 
-export function ProjectCard({ project, showOutlineLink = true, detailsPath }: ProjectCardProps) {
+export function ProjectCard({ project, showOutlineLink = true, detailsPath, detailsLabel = "Read case study" }: ProjectCardProps) {
   return (
     <article className="project-card" id={project.id}>
       <div className="project-meta">
@@ -32,7 +33,7 @@ export function ProjectCard({ project, showOutlineLink = true, detailsPath }: Pr
       </ul>
       {showOutlineLink || detailsPath ? (
         <Link className="project-link" to={detailsPath ?? `/work#${project.id}`}>
-          {detailsPath ? "Read case study" : "View project outline"} <ArrowUpRight aria-hidden="true" size={17} />
+          {detailsPath ? detailsLabel : "View project outline"} <ArrowUpRight aria-hidden="true" size={17} />
         </Link>
       ) : null}
     </article>

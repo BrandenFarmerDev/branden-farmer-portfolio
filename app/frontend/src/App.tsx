@@ -10,6 +10,7 @@ const ContactPage = lazy(() => import("./pages/ContactPage").then((module) => ({
 const AskPage = lazy(() => import("./pages/AskPage").then((module) => ({ default: module.AskPage })));
 const PrivacyPage = lazy(() => import("./pages/PrivacyPage").then((module) => ({ default: module.PrivacyPage })));
 const OwnerPage = lazy(() => import("./pages/OwnerPage").then((module) => ({ default: module.OwnerPage })));
+const JobSearchDemo = lazy(() => import("./features/job-search-demo/JobSearchDemo").then((module) => ({ default: module.JobSearchDemo })));
 const GridOperationsPage = lazy(() => import("./pages/GridOperationsPage").then((module) => ({ default: module.GridOperationsPage })));
 
 function RouteFallback() {
@@ -19,6 +20,8 @@ function RouteFallback() {
 export function App() {
   return (
     <Routes>
+      {/* The demo brings its own shell, so it sits outside the portfolio layout. */}
+      <Route path="projects/job-search-intelligence/*" element={<Suspense fallback={<RouteFallback />}><JobSearchDemo /></Suspense>} />
       <Route element={<Layout />}>
         <Route element={<Suspense fallback={<RouteFallback />}><HomePage /></Suspense>} index />
         <Route path="work" element={<Suspense fallback={<RouteFallback />}><WorkPage /></Suspense>} />

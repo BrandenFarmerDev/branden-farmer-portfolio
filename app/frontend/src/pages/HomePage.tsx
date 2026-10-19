@@ -2,7 +2,7 @@ import { ArrowRight, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import profilePhoto from "../assets/profile-photo.webp";
 import { ProjectCard } from "../components/ProjectCard";
-import { projects } from "../content/projects";
+import { projectLinks, projects } from "../content/projects";
 import { siteContent } from "../content/site";
 
 export function HomePage() {
@@ -60,7 +60,8 @@ export function HomePage() {
             <ProjectCard
               key={project.id}
               project={project}
-              detailsPath={project.id === "grid-operations" ? "/projects/grid-operations" : undefined}
+              detailsPath={projectLinks[project.id]?.path}
+              detailsLabel={projectLinks[project.id]?.label}
             />
           ))}
         </div>
