@@ -182,4 +182,3 @@ export function deleteAllData(confirmation: string): DemoAction {
     : succeed({ ...state, applications: [], events: [], matches: [], decisions: [], runs: [], importedBatches: [], reprocessPending: false, gmail: { connected: false, paused: true }, tracker: false },
       "All demo data was deleted. Imports stay paused until you reconnect a source. Use Reset demo to restore the sample data.");
 }
-

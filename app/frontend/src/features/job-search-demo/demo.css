@@ -133,7 +133,7 @@
     --qe-shadow-overlay: 0 8px 24px rgb(15 23 31 / 16%);
     --qe-shadow-dialog: 0 16px 48px rgb(15 23 31 / 22%);
     color-scheme: light;
-  
+
   &[data-theme="dark"] {
     --qe-color-canvas: #0f151c;
     --qe-color-surface: #16202a;
