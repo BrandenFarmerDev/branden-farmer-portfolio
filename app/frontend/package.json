@@ -14,7 +14,7 @@
   "dependencies": {
     "@calcom/embed-react": "^1.5.3",
     "@fontsource/manrope": "^5.2.7",
-    "@fontsource/source-serif-4": "^5.2.7",
+    "@fontsource/source-serif-4": "^5.3.1",
     "@portfolio/shared": "*",
     "lucide-react": "^1.48.0",
     "react": "^19.1.1",
