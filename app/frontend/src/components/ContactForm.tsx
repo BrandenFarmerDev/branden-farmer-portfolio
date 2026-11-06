@@ -3,6 +3,7 @@ import { Send } from "lucide-react";
 import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from "react";
 import { ContactApiError, submitContact } from "../lib/api";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { ApiSignInRecovery } from "./ApiStatus";
 
 interface ContactValues {
   name: string;
@@ -47,6 +48,7 @@ export function ContactForm() {
   const [fieldErrors, setFieldErrors] = useState<ContactFieldErrors>({});
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [statusMessage, setStatusMessage] = useState("");
+  const [requestFailed, setRequestFailed] = useState(false);
   const submissionRef = useRef({ id: crypto.randomUUID(), signature: "" });
   const formRef = useRef<HTMLFormElement>(null);
   const statusRef = useRef<HTMLParagraphElement>(null);
@@ -100,6 +102,7 @@ export function ContactForm() {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 18_000);
     setStatus("submitting");
+    setRequestFailed(false);
     setStatusMessage("Sending your message…");
 
     try {
@@ -119,6 +122,7 @@ export function ContactForm() {
       setStatusMessage(response.message);
       submissionRef.current = { id: crypto.randomUUID(), signature: "" };
     } catch (error) {
+      setRequestFailed(true);
       if (error instanceof ContactApiError) {
         setFieldErrors(error.details.fieldErrors ?? {});
         focusErrorsRef.current = true;
@@ -293,6 +297,7 @@ export function ContactForm() {
           tabIndex={status === "error" ? -1 : undefined}
         >
           {statusMessage}
+          {requestFailed ? <> <ApiSignInRecovery /></> : null}
         </p>
       </form>
     </section>

@@ -105,14 +105,14 @@ The Cal.com event type ID, Access team domain, and Access audience tag are ident
 
 ### 6. Protect the owner tools with Cloudflare Access
 
-Follow the complete [owner Access setup guide](owner-access-setup.md). The current route is **Zero Trust → Access controls → Applications**. Create one application per environment, each containing both the page and API destinations, with the exact-email owner policy attached:
+Follow the complete [owner Access setup guide](owner-access-setup.md). The current route is **Zero Trust → Access controls → Applications**. Update the existing owner application in each environment in place, preserving its ID/AUD and both destinations, pinning the original restrictive Cloudflare provider, and attaching the portfolio-specific exact-owner+US policy. Do not create replacement apps, add OTP, or edit the shared owner policy:
 
 | Environment | Owner page destination | Owner API destination |
 | --- | --- | --- |
 | Preview | `preview.brandenfarmer.com/owner` | `api-preview.brandenfarmer.com/api/owner` |
 | Production | `brandenfarmer.com/owner` | `api.brandenfarmer.com/api/owner` |
 
-Plain paths inherit protection to child paths. Check **Bypass OPTIONS requests to origin** and **Eager redirect cookie** in Advanced settings. The Worker validates the Origin on OPTIONS; actual owner requests require a valid Access JWT. Copy each application's AUD to its matching `ACCESS_AUD`, and the existing team domain without scheme or trailing slash to `ACCESS_TEAM_DOMAIN`.
+Plain paths inherit protection to child paths. Check **Bypass OPTIONS requests to origin** and **Eager redirect cookie** in Advanced settings. The Worker validates the Origin on OPTIONS; actual owner requests require a valid Access JWT. Verify each existing application's AUD still matches its `ACCESS_AUD` and preserve the existing team domain in `ACCESS_TEAM_DOMAIN`. Enable HttpOnly and path-scoped owner cookies. Visitor protection is separate: finite bootstrap may still be public, while an active-gate release requires the full [visitor rollout](visitor-access-setup.md), including US-only visitor login, Pages aliases and WAF.
 
 ### 7. Connect Cal.com booking history
 

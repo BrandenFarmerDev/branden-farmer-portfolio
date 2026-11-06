@@ -10,7 +10,7 @@ describe("API session recovery", () => {
     expect(link).toHaveAttribute("href", "http://localhost:8787/api/health");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
-    expect(screen.getByText(/then reload this page/)).toBeInTheDocument();
+    expect(screen.getByText(/then return and reload this page/)).toBeInTheDocument();
   });
   it("does not report a followed Access login page as connected", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response("<html>Sign in</html>", { status: 200 }));

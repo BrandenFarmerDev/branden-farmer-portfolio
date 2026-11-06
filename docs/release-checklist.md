@@ -20,7 +20,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] Production and preview D1 databases exist, their IDs are in `wrangler.toml`, and the deploy token has D1 Edit.
 - [ ] `ASK_SIGNING_SECRET`, `CAL_WEBHOOK_SECRET`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, and `CAL_EVENT_TYPE_ID` are set per environment.
 - [ ] The production Cal.com event webhook is enabled for created, rescheduled, and canceled bookings, points to the production API, and uses the production Worker's `CAL_WEBHOOK_SECRET`.
-- [ ] Cloudflare Access protects only `/owner` and `/api/owner`, allows only the owner, and bypasses OPTIONS.
+- [ ] Owner Access apps preserve their existing IDs/AUDs, pin the original restrictive Cloudflare provider and attach the portfolio exact-owner+US policy; OPTIONS bypass remains content-free and exact-origin. During finite bootstrap only, visitor protection may still be inactive; active-gate release requires the complete visitor rollout below.
 - [ ] The [owner Access guide](owner-access-setup.md) is complete: each environment's page and API share an application, its AUD matches the Worker, and Eager redirect cookie is enabled.
 - [ ] Preview Pages has a successful `preview` branch upload and a proxied `preview` CNAME pointing to its branch alias, not the production Pages hostname.
 - [ ] The manual preview workflow can be dispatched from GitHub; the default-branch workflow prerequisite is resolved before relying on the Run workflow button.
@@ -34,7 +34,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] Each Ask evidence link opens the exact résumé or About passage, highlights it, and moves focus to it; Back restores the previous answer.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).
 - [ ] Canonical URL, sitemap, and metadata use `https://brandenfarmer.com`.
-- [ ] Job Search Intelligence demo smoke test on the deployed site: `/projects/job-search-intelligence` and a nested route (for example `/review`) load directly without a login; a browser network inventory during search, add, edit, merge, review, sync, delete, reset and CSV export shows no request beyond static assets; searched text never appears in the address bar; the Back to portfolio link works and portfolio pages show no demo styling; the private Job Search Intelligence application remains behind Cloudflare Access. Roll back with Cloudflare's rollback controls and a reviewed revert, as described in the deployment guide.
+- [ ] Job Search Intelligence demo smoke test on the deployed site: `/projects/job-search-intelligence` and a nested route (for example `/review`) load directly after approved US visitor login once the gate is active (public loading is permitted only during the explicit finite bootstrap); after sign-in, a browser network inventory during search, add, edit, merge, review, sync, delete, reset and CSV export shows no request beyond static assets; searched text never appears in the address bar; the Back to portfolio link works and portfolio pages show no demo styling; the private Job Search Intelligence application remains behind Cloudflare Access. Roll back with Cloudflare's rollback controls and a reviewed revert, as described in the deployment guide.
 
 ## Core browser flows
 

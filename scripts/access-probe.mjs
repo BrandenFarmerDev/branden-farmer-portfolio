@@ -17,7 +17,7 @@ export function rolloutMode(env, now = Date.now()) {
 export async function verifyResponse(response, target, mode, kind) {
   if (mode === "enforced") {
     const location = new URL(response.headers.get("location") || "/", target);
-    if (response.status !== 302 || location.protocol !== "https:" || location.hostname !== teamHost
+    if (response.status !== 302 || location.origin !== `https://${teamHost}` || location.username || location.password
       || location.pathname !== `/cdn-cgi/access/login/${new URL(target).hostname}`) {
       throw new Error(`Expected the pinned Access login challenge for ${new URL(target).hostname}; received HTTP ${response.status}.`);
     }

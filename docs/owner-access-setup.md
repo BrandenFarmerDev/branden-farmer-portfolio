@@ -1,116 +1,33 @@
-# Set up the private portfolio owner area
+# Maintain the private portfolio owner area
 
-Verified against Cloudflare documentation and the owner's dashboard screenshots on 29 September 2026. This guide configures Access; it does not deploy the portfolio. Preview is the first environment to configure.
+This is the current owner configuration procedure for the visitor-access rollout. The September owner-only bootstrap instructions are superseded: do not add OTP, change the shared provider/policy, create replacement owner applications, or replace their audience tags. Follow [visitor access setup](visitor-access-setup.md) for prerequisites, release authorization, visitor applications and live validation. This document does not deploy or activate configuration.
 
-An Access **application** identifies the URLs to protect. A **policy** identifies who may enter. An **identity provider** verifies the person's login. Creating this application adds a login gate to the existing portfolio; it does not create another website or Worker.
+## Preserve existing application identity
 
-## 1. Start from the screen in the screenshots
+| Environment | Existing owner application | Required destinations |
+| --- | --- | --- |
+| Production | `db977420-b11d-4c07-8340-42271473755c` | `brandenfarmer.com/owner`, `api.brandenfarmer.com/api/owner` |
+| Preview | `447184cc-a644-491d-a763-c63ef65ce833` | `preview.brandenfarmer.com/owner`, `api-preview.brandenfarmer.com/api/owner` |
 
-The screenshots already show the Zero Trust dashboard, an existing **Cloudflare** identity provider, and **Access controls → Applications** with no applications yet. No additional Zero Trust enrollment is needed for these steps.
+Export current configuration before changes and update these applications in place. Preserve their AUDs, destinations and existing session durations (production 24h, preview 12h). Compare each AUD to the existing corresponding `ACCESS_AUD` in [wrangler.toml](../app/backend/wrangler.toml); the team domain stays `cold-union-464d.cloudflareaccess.com`. The Worker separately verifies issuer, audience, signature, expiry and exact owner email. Do not change those values to conceal a failed login.
 
-The current navigation is **Access controls → Policies** and **Access controls → Applications**. The Applications page's **Create new application** button is the correct entry point. Its prerequisites describe several application types; a private IP, Tunnel, WARP client, SaaS entity ID, and SAML endpoint are not needed for this portfolio's public Cloudflare hostnames.
+## Pin the provider and isolate the policy
 
-Cloudflare calls the relevant application type **Self-hosted and private**. Choose **Add public hostname** within that type. See [Cloudflare's application creation instructions](https://developers.cloudflare.com/learning-paths/clientless-access/access-application/create-access-app/).
+1. Test the existing Cloudflare provider `a4b44d0e-654a-44f8-9caa-f6cadc52520f` as `branden_farmer@live.com`. Preserve `restrict_to_account_members: true`. If it fails, stop and diagnose; OTP or another IdP is not an authorized fallback.
+2. Create the new portfolio-only Allow policy described in [the manifest](visitor-access-config.json): **Include Emails `branden_farmer@live.com`** and **Require Country US**. Include alternatives are OR, so do not add Everyone or another identity alternative. Do not edit shared policy `2f08f97a-f619-47d4-abd1-dbe6ca15a943`, which other applications use.
+3. Pin both existing portfolio owner apps' `allowed_idps` explicitly to the original provider UUID, then attach the new portfolio owner+US policy in place of the shared policy. Preserve other unrelated application settings. Review the exported diff before applying within the authorized release.
+4. Set HttpOnly, eager redirect cookie and path-scoped cookies (`http_only_cookie_attribute`, `eager_redirect_cookie_setting`, `path_cookie_attribute`) to true. Set `options_preflight_bypass: true`; do not also set `cors_headers`. The Worker answers exact-origin preflights without returning business data; actual owner requests still require authentication.
 
-## 2. Check the existing login method
+Owner destinations use plain `/owner` and `/api/owner`, whose children inherit the policy. They remain more specific than the visitor apps. Do not use `/owner*` or add visitor/Cal destinations to the owner apps. Do not create a duplicate app when the saved one already exists.
 
-1. Select **Integrations → Identity providers**.
-2. In the existing **Cloudflare** row, select **Test**.
-3. Complete sign-in and confirm the test succeeds. Check that your login email is `branden_farmer@live.com`.
+## Bootstrap versus activated visitor access
 
-The Worker checks this exact owner email, ignoring capitalization. An email mismatch must be resolved before owner login can work. The displayed provider row confirms configuration exists, not that authentication has been tested. Cloudflare documents [testing an identity provider](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/#test-idps-in-cloudflare-one) and its [Cloudflare login method](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/cloudflare/).
+During the explicitly finite supporting-code bootstrap, owner routes remain protected while visitor routes may still be public. This is not activated visitor protection. Once the visitor gate is activated, homepage, demo, assets, PDF and ordinary APIs require approved visitor login plus US geography; owner routes still require the original provider and exact owner+US policy. Cal uses the narrow signed transport bypass and remains subject to geography. Default and wildcard Pages URLs are owner+US protected as specified in the visitor manifest.
 
-Use the existing Cloudflare provider if the test succeeds. If you need to sign in through the owner's email inbox instead, add **One-time PIN** under **Add an identity provider**, then explicitly select that method for the application. Do not rely on the generic page text promising automatic PIN login: the current [OTP documentation](https://developers.cloudflare.com/cloudflare-one/integrations/identity-providers/one-time-pin/) says new organizations do not receive OTP automatically.
+## Validation and recovery
 
-## 3. Create the owner policy first
+Test preview first, then production under the existing release/approved-merge procedure. Signed-out owner page and direct owner API requests must challenge. The exact US owner must read and mutate records; an ordinary visitor and a non-US owner must be denied. In one browser test visitor to owner to visitor with functioning API calls, then expired/missing API cookies, separate API sign-in and return/reload recovery. Inspect effective cookie paths and exact-origin OPTIONS behavior rather than assuming eager-cookie configuration worked.
 
-1. Open **Access controls → Policies**.
-2. Select **Add a policy**.
-3. Set **Policy name** to `Portfolio owner only`.
-4. Set **Action** to `Allow`.
-5. Choose an **8-hour** session duration if offered (a project preference, not a provider requirement).
-6. Under the rules, add **Include → Emails → branden_farmer@live.com**.
-7. Save the policy.
+An authenticated 403 can indicate wrong issuer, AUD or email; a 503 can indicate unavailable bindings. Diagnose with safe request IDs and Access events, never log tokens. Preserve a signed-in operator session and the pre-change export. Use the visitor runbook's scoped recovery procedure; do not broaden providers, mutate the shared policy or delete the gate to recover. Actual live validation and recovery exercises remain release blockers until evidenced.
 
-Select **Emails**, not **Emails ending in**. Do not add an Everyone Include rule: Include alternatives can broaden who is admitted. No separate Access rule group is needed. Creating the policy alone does not protect any URL; the next step attaches it to an application. See [policy management](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/policy-management/) and [rule behavior](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/).
-
-## 4. Create the preview application
-
-1. Open **Access controls → Applications**.
-2. Select **Create new application**.
-3. Select **Self-hosted and private** (or **Self-hosted** if that shorter label is shown).
-4. Set **Application name** to `Portfolio owner - preview`.
-5. Select **Add public hostname** and add the owner page. Add a second public hostname for its API, in the same application.
-
-If the form splits the address into Subdomain, Domain, and Path, use these values:
-
-| Destination | Subdomain | Domain | Path |
-| --- | --- | --- | --- |
-| Owner page | `preview` | `brandenfarmer.com` | `owner` |
-| Owner API | `api-preview` | `brandenfarmer.com` | `api/owner` |
-
-The resulting destinations must read `preview.brandenfarmer.com/owner` and `api-preview.brandenfarmer.com/api/owner`. If the Path control already displays a `/` prefix, do not type a second slash. If it accepts a full path, use `/owner` and `/api/owner`. Do not put a scheme or an entire URL into a Subdomain field.
-
-Use the plain paths above. Cloudflare's [path inheritance rules](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/) cover their child paths unless a more-specific application overrides them. `/owner*` is unnecessary and broadens matching; `/owner/*` alone does not cover `/owner` itself. These owner destinations remain more specific than the visitor applications. The homepage, Ask, contact and health require visitor Access; the signed Cal route uses its narrowly scoped transport bypass. Follow [visitor access rollout](visitor-access-setup.md).
-
-6. Under **Access policies**, select the existing `Portfolio owner only` policy and attach it. If the wizard offers a policy picker, confirm the selection before proceeding.
-7. Under **Identity providers** or login methods, select **Cloudflare**, or the explicitly configured OTP method from step 2.
-8. Leave unrelated optional settings at their defaults and complete **Create** or **Save**.
-
-This application can be configured before the preview deployment is ready. It does not create DNS records or make an undeployed owner page available. Do not add another identical application if one was already saved; configure the existing one.
-
-## 5. Configure browser access to the API
-
-Open the saved preview application using **Configure**, then **Advanced settings**:
-
-1. Under **Cross-Origin Resource Sharing (CORS) settings**, enable **Bypass OPTIONS requests to origin**. The Worker answers allowed preflights with HTTP 204 and checks the Origin. Actual owner requests still require the Access token. The earlier claim that preflight requests themselves require a token was incorrect. See [Cloudflare's CORS instructions](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/cors/).
-2. Under **Cookie settings**, confirm **Eager redirect cookie** is enabled. It prepares the authentication cookie for both concrete hostnames, allowing the owner page to call the API after login. Keep HttpOnly enabled and set path-scoped cookies (`path_cookie_attribute: true`) for both owner applications; confirm visitor-to-owner-to-visitor requests in one browser. This setting is documented as enabled by default for new applications; checking it makes the required behavior explicit. See [multi-domain cookies](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/#multi-domain-applications).
-3. Save changes.
-
-## 6. Copy the two Access identifiers
-
-These are identifiers, not passwords. Neither is your account ID or an API token.
-
-**Application audience:** In **Access controls → Applications**, configure the preview application. Under **Additional settings**, copy **Application Audience (AUD) Tag**. It identifies this application; creating a separate production application produces a separate AUD. See [finding an AUD tag](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/validating-json/#get-your-aud-tag).
-
-**Team domain:** In Zero Trust **Settings**, look for **Team name and domain**. Cloudflare's documentation also places this information under **Custom pages**, which may be nested under **Reusable components**. Copy the existing `something.cloudflareaccess.com` domain; do not rename the team. The [Zero Trust FAQ](https://developers.cloudflare.com/cloudflare-one/faq/getting-started-faq/) documents both locations, so the field label is a better guide than assuming one menu location.
-
-In [wrangler.toml](../app/backend/wrangler.toml), replace only the corresponding two values under `[env.preview.vars]`:
-
-```toml
-ACCESS_TEAM_DOMAIN = "your-actual-team.cloudflareaccess.com"
-ACCESS_AUD = "your-actual-preview-application-audience-tag"
-```
-
-This repository expects the team domain without `https://` and without a trailing slash. Its verifier adds the scheme itself. `AI_ENABLED` is controlled separately in the deployment configuration and does not affect Access protection.
-
-## 7. Test after preview deployment
-
-Access configuration and a working deployed preview are separate milestones. Follow [preview deployment prerequisites](deployment.md#8-set-up-the-isolated-preview) before treating a missing page as an Access failure.
-
-1. In a signed-out browser session, open `https://preview.brandenfarmer.com/owner` and `https://api-preview.brandenfarmer.com/api/owner/settings`. Both must require Access authentication. A private window can check this signed-out gate; use your normal browser session to diagnose authenticated cross-domain requests.
-2. Sign in as `branden_farmer@live.com`. The owner page should load; the API settings endpoint should return JSON after deployment and configuration are complete.
-3. If the page loads but API calls fail, follow its **Sign in to the owner API** link, complete the top-level navigation, then return and reload. Check Eager redirect and OPTIONS settings if the problem persists.
-4. An authenticated API 403 can mean an incorrect team domain, AUD, or email. A 503 saying owner tools are unavailable can indicate a missing database binding. A DNS error or 404 before deployment is not proof of a bad policy.
-5. After visitor enforcement, confirm the homepage and `/api/health` require Access while signed out. Confirm an identity outside the Allow policy cannot enter the private routes.
-
-## 8. Production mapping
-
-After preview validation, create `Portfolio owner - production` with the same policy and these two destinations in one application:
-
-| Destination | Subdomain | Domain | Path |
-| --- | --- | --- | --- |
-| Owner page | Leave empty | `brandenfarmer.com` | `owner` |
-| Owner API | `api` | `brandenfarmer.com` | `api/owner` |
-
-Repeat the CORS and cookie checks. Put this application's AUD in `[env.production.vars]`; the team domain normally stays the same. Production code deployment still follows the reviewed merge workflow.
-
-## What changed from the earlier instructions
-
-- Replaced the unsupported claim about a menu reorganization with navigation visible in the screenshots and current documentation.
-- Added policy-first setup, provider testing, and exact Subdomain/Domain/Path fields.
-- Removed the claim that a path wildcard is required.
-- Added multi-domain cookie configuration and corrected the explanation of OPTIONS handling.
-- Distinguished creating Access configuration from deploying the preview site.
-
-Research also included public discussions such as [application versus App Launcher confusion](https://www.reddit.com/r/CloudFlare/comments/120849f/) and [preview custom domains](https://www.reddit.com/r/CloudFlare/comments/1j35b0e/). Those surfaced common stumbling blocks; the technical instructions above rely on the linked official documentation and this repository's implementation.
+Official references: [application paths](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/), [policy rules](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/), [cookie configuration](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/), [CORS](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/cors/).

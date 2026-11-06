@@ -17,6 +17,8 @@ test("enforced probe accepts only the exact team and application challenge", asy
   await verifyResponse(challenge("https://cold-union-464d.cloudflareaccess.com/cdn-cgi/access/login/api.brandenfarmer.com?token=opaque"), target, "enforced", "health");
   for (const response of [Response.json({ status: "ok" }), new Response("blocked", { status: 403 }),
     challenge("https://evil.example/cdn-cgi/access/login/api.brandenfarmer.com"),
+    challenge("https://cold-union-464d.cloudflareaccess.com:8443/cdn-cgi/access/login/api.brandenfarmer.com"),
+    challenge("https://user:password@cold-union-464d.cloudflareaccess.com/cdn-cgi/access/login/api.brandenfarmer.com"),
     challenge("https://cold-union-464d.cloudflareaccess.com/"),
     challenge("https://cold-union-464d.cloudflareaccess.com/cdn-cgi/access/login/other.example")]) {
     await assert.rejects(verifyResponse(response, target, "enforced", "health"), /Expected/);
