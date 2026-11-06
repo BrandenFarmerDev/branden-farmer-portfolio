@@ -24,13 +24,21 @@ describe("API client", () => {
     }));
 
     await expect(getApiHealth()).resolves.toMatchObject({ status: "ok" });
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/health", { signal: undefined });
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/health", { credentials: "include", signal: undefined });
   });
 
   it("rejects failed health responses", async () => {
     vi.mocked(fetch).mockResolvedValueOnce(new Response(null, { status: 503 }));
 
     await expect(getApiHealth()).rejects.toThrow("Health check failed with status 503");
+  });
+
+  it("rejects login HTML and malformed successful health responses", async () => {
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(new Response("<html>Sign in</html>"))
+      .mockResolvedValueOnce(Response.json({ status: "ok", service: "another-service" }));
+    await expect(getApiHealth()).rejects.toThrow("Sign in to the portfolio API");
+    await expect(getApiHealth()).rejects.toThrow("Sign in to the portfolio API");
   });
 
   it("loads the Ask allowance with credentials and rejects malformed status bodies", async () => {
@@ -56,6 +64,7 @@ describe("API client", () => {
     await expect(submitContact(contact)).resolves.toEqual({ ok: true, message: "Message sent." });
     expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/contact", expect.objectContaining({
       method: "POST",
+      credentials: "include",
       body: JSON.stringify(contact),
     }));
   });

@@ -1,6 +1,6 @@
 # Branden Farmer Portfolio
 
-A React and Cloudflare portfolio scaffold for work spanning operations, data, automation, and application development. Unfinished public project descriptions are intentionally marked as prototypes and do not contain invented accomplishments or metrics. Job Search Intelligence is published as a login-free interactive demo with fictional data (see `docs/architecture.md`).
+A React and Cloudflare portfolio scaffold for work spanning operations, data, automation, and application development. Unfinished public project descriptions are intentionally marked as prototypes and do not contain invented accomplishments or metrics. Job Search Intelligence is published as an interactive demo with fictional data, covered by the portfolio visitor access policy (see `docs/architecture.md`).
 
 ## Prerequisites
 

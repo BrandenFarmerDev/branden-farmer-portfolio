@@ -48,7 +48,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] With answers enabled in preview, the Ask counter shows 0 of 5 on first load and increments per answer; the sixth question from one browser is declined, the button is disabled with its reset time, and the evaluation set is reviewed for citation accuracy and phone-connection latency.
 - [ ] A Cal.com test booking creates, reschedules, and cancels one history record; duplicate deliveries are ignored.
 - [ ] Loading `/owner` or `/api/owner/contacts` directly while signed out is blocked by Access.
-- [ ] After owner login in a normal browser session, page-to-API reads and mutations succeed; public homepage and health routes still work while signed out.
+- [ ] After owner login in a normal browser session, page-to-API reads and mutations succeed; homepage and health routes require visitor Access while signed out.
 
 ## Security and operations
 
@@ -62,7 +62,12 @@ Use this checklist for a reviewed preview and again before a production release.
 ## Performance and recovery
 
 - [ ] Home does not eagerly load the Contact/Cal.com route chunk.
-- [ ] Profile photo and hashed assets retain their intended cache headers.
+- [ ] HTML, profile photo, hashed assets and résumé PDF return `Cache-Control: private, no-store`; test warm caches after sign-out.
 - [ ] No browser console error appears during the core flows.
 - [ ] The previous Pages and Worker versions are identifiable for rollback before publishing.
-- [ ] After merge, the `Deploy production` job follows `Quality gates` and its Worker, Pages deployment, and public-domain health checks all pass.
+- [ ] After merge, the `Deploy production` job follows `Quality gates` and its Worker, Pages deployment, and Access-boundary checks all pass; separately record authenticated application health and genuine Cal delivery.
+
+## Visitor authentication and geography activation
+
+- [ ] Complete every prerequisite and live acceptance exercise in [visitor access rollout](visitor-access-setup.md), including ordinary Google/Microsoft visitors, owner isolation, US/non-US existing sessions, Pages aliases, expired-session recovery, signed Cal geography and seat capacity.
+- [ ] Set each GitHub environment `ACCESS_ROLLOUT_STATE=enforced` after activation; remove `ACCESS_BOOTSTRAP_DEADLINE`. Bootstrap expires no later than 2026-11-12T08:00:00Z and is not protected-site readiness.

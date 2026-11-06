@@ -200,3 +200,7 @@ No one needs to run a production deploy command for routine releases. A failed q
 Cloudflare retains deployment history for both Pages and Workers. Before the first public release, verify that the team can identify the previous successful Pages deployment and Worker version in the Cloudflare dashboard.
 
 If a release must be reversed, use Cloudflare's rollback controls for the affected service, then revert the faulty commit through a reviewed pull request. The merge of that revert creates a new, fully validated production deployment and restores source control as the deployment source of truth.
+
+## Required visitor access rollout
+
+Follow [visitor access setup](visitor-access-setup.md) before activating mandatory Google/Microsoft login and US-only access. Set GitHub environment `ACCESS_ROLLOUT_STATE` explicitly to `bootstrap` with `ACCESS_BOOTSTRAP_DEADLINE` no later than 2026-11-12T08:00:00Z for the initial supporting-code release, or `enforced` once Access is active. An unset/expired state fails verification. The workflow never follows login HTML as application health; enforced probes check only the pinned Access challenge. Authenticated health, contact/Ask and genuine signed Cal delivery remain separate manual release gates. Do not introduce service-token exceptions to visitor applications.

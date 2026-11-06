@@ -16,7 +16,7 @@ export function AboutPage() {
       </article>)}</div>
     </Panel>
     <Panel title="About this demo">
-      <p className="qe-reading">This is an interactive, login-free demonstration of Branden Farmer&apos;s private Job Search Intelligence application. It uses the same screens and workflows with an invented dataset that runs entirely in your browser. Nothing you do is sent anywhere or stored, and refreshing the page restores the original sample. The private application and its real data are separate and stay behind owner access.</p>
+      <p className="qe-reading">This is an interactive demonstration within the portfolio visitor access policy of Branden Farmer&apos;s private Job Search Intelligence application. It uses the same screens and workflows with an invented dataset that runs entirely in your browser. Nothing you do is sent anywhere or stored, and refreshing the page restores the original sample. The private application and its real data are separate and stay behind owner access.</p>
     </Panel>
   </>;
 }

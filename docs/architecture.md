@@ -67,4 +67,12 @@ Every API response is non-cacheable and includes baseline response-hardening hea
 - A separate production job runs only after those checks pass on `main`. It receives Cloudflare deployment credentials from the protected GitHub `production` environment; application secrets remain exclusively in Cloudflare Worker secrets.
 - CodeQL and Dependabot provide scheduled security and maintenance signals.
 
-The root `undici` development dependency and npm override pin Wrangler's local Miniflare dependency to the patched 7.29.1 release. Keep that override until Wrangler declares the patched version directly; Dependabot and the audit gate will surface when it can be removed safely.
+The Wrangler/Miniflare override pins Undici 7.30.1. The temporary version-qualified `@typescript-eslint/typescript-estree@8.72.1` override selects minimatch 11.0.1 for GHSA-g3hv-75wg-m249; remove it once the upstream parent declares a patched version. The named CommonJS minimatch API, dot-file and nested-path behavior are checked during this change. All other dependency updates stay within declared ranges.
+
+## Visitor access boundary
+
+[Visitor access rollout](visitor-access-setup.md) defines edge Access for the concrete production apex/API and preview/API pairs, approved provider IDs and a US requirement. More-specific owner applications retain their existing AUDs and exact-email checks. Default and wildcard Pages URLs are owner-only; Worker default and preview URLs are disabled in Wrangler. The signed exact Cal POST is the only business-data transport bypass; its path inheritance also permits harmless method errors, not-found responses and content-free exact-origin OPTIONS. The five-host WAF geography block still covers Cal. No duplicate visitor JWT service is implemented.
+
+Every frontend asset, HTML response and PDF carries `private, no-store`. Previously downloaded content cannot be recalled. External Power BI and Cal-hosted pages retain independent access controls. Browser health and contact calls include credentials, and unavailable API sessions offer a separate sign-in tab and reload recovery.
+
+`npm run quality` includes a fresh local CodeQL database and pinned security-extended query pack, fails on every reported finding or incomplete SARIF run, and repeats the source gate in CI. Install the official CodeQL CLI and set `CODEQL_BINARY` when it is not on PATH. Reports are retained under ignored `reports/codeql-*`; they are evidence for the inspected candidate, not a guarantee that all vulnerabilities are absent.

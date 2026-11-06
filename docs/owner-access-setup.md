@@ -51,7 +51,7 @@ If the form splits the address into Subdomain, Domain, and Path, use these value
 
 The resulting destinations must read `preview.brandenfarmer.com/owner` and `api-preview.brandenfarmer.com/api/owner`. If the Path control already displays a `/` prefix, do not type a second slash. If it accepts a full path, use `/owner` and `/api/owner`. Do not put a scheme or an entire URL into a Subdomain field.
 
-Use the plain paths above. Cloudflare's [path inheritance rules](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/) cover their child paths unless a more-specific application overrides them. `/owner*` is unnecessary and broadens matching; `/owner/*` alone does not cover `/owner` itself. Keep the public homepage, Ask, contact, health, and Cal webhook endpoints outside the protected destinations.
+Use the plain paths above. Cloudflare's [path inheritance rules](https://developers.cloudflare.com/cloudflare-one/access-controls/policies/app-paths/) cover their child paths unless a more-specific application overrides them. `/owner*` is unnecessary and broadens matching; `/owner/*` alone does not cover `/owner` itself. These owner destinations remain more specific than the visitor applications. The homepage, Ask, contact and health require visitor Access; the signed Cal route uses its narrowly scoped transport bypass. Follow [visitor access rollout](visitor-access-setup.md).
 
 6. Under **Access policies**, select the existing `Portfolio owner only` policy and attach it. If the wizard offers a policy picker, confirm the selection before proceeding.
 7. Under **Identity providers** or login methods, select **Cloudflare**, or the explicitly configured OTP method from step 2.
@@ -64,7 +64,7 @@ This application can be configured before the preview deployment is ready. It do
 Open the saved preview application using **Configure**, then **Advanced settings**:
 
 1. Under **Cross-Origin Resource Sharing (CORS) settings**, enable **Bypass OPTIONS requests to origin**. The Worker answers allowed preflights with HTTP 204 and checks the Origin. Actual owner requests still require the Access token. The earlier claim that preflight requests themselves require a token was incorrect. See [Cloudflare's CORS instructions](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/cors/).
-2. Under **Cookie settings**, confirm **Eager redirect cookie** is enabled. It prepares the authentication cookie for both concrete hostnames, allowing the owner page to call the API after login. Keep HttpOnly enabled and leave other cookie settings at their defaults initially. This setting is documented as enabled by default for new applications; checking it makes the required behavior explicit. See [multi-domain cookies](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/#multi-domain-applications).
+2. Under **Cookie settings**, confirm **Eager redirect cookie** is enabled. It prepares the authentication cookie for both concrete hostnames, allowing the owner page to call the API after login. Keep HttpOnly enabled and set path-scoped cookies (`path_cookie_attribute: true`) for both owner applications; confirm visitor-to-owner-to-visitor requests in one browser. This setting is documented as enabled by default for new applications; checking it makes the required behavior explicit. See [multi-domain cookies](https://developers.cloudflare.com/cloudflare-one/access-controls/applications/http-apps/authorization-cookie/#multi-domain-applications).
 3. Save changes.
 
 ## 6. Copy the two Access identifiers
@@ -92,7 +92,7 @@ Access configuration and a working deployed preview are separate milestones. Fol
 2. Sign in as `branden_farmer@live.com`. The owner page should load; the API settings endpoint should return JSON after deployment and configuration are complete.
 3. If the page loads but API calls fail, follow its **Sign in to the owner API** link, complete the top-level navigation, then return and reload. Check Eager redirect and OPTIONS settings if the problem persists.
 4. An authenticated API 403 can mean an incorrect team domain, AUD, or email. A 503 saying owner tools are unavailable can indicate a missing database binding. A DNS error or 404 before deployment is not proof of a bad policy.
-5. Confirm the public homepage and `/api/health` remain available without an Access login. Confirm an identity outside the Allow policy cannot enter the private routes.
+5. After visitor enforcement, confirm the homepage and `/api/health` require Access while signed out. Confirm an identity outside the Allow policy cannot enter the private routes.
 
 ## 8. Production mapping
 

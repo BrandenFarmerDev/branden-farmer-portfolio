@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getApiHealth } from "../lib/api";
+import { apiBaseUrl, getApiHealth } from "../lib/api";
 
 export function ApiStatus() {
   const [available, setAvailable] = useState<boolean | null>(null);
@@ -20,6 +20,7 @@ export function ApiStatus() {
     <span className="api-status" title="Cloudflare Worker status">
       <span className={available ? "status-dot is-online" : "status-dot"} aria-hidden="true" />
       {label}
+      {available === false ? <span> · <a href={`${apiBaseUrl}/api/health`} target="_blank" rel="noopener noreferrer">Sign in to the portfolio API</a>, then reload this page.</span> : null}
     </span>
   );
 }

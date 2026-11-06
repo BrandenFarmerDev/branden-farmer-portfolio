@@ -1,0 +1,224 @@
+{
+  "status": "REVIEW TEMPLATE ONLY; placeholders block activation; not an API provisioning program",
+  "team_domain": "cold-union-464d.cloudflareaccess.com",
+  "visitor_policy_to_create": {
+    "name": "portfolio visitors approved providers and US",
+    "decision": "allow",
+    "include": [
+      {
+        "login_method": {
+          "id": "REPLACE_WITH_VERIFIED_GOOGLE_PROVIDER_ID"
+        }
+      },
+      {
+        "login_method": {
+          "id": "REPLACE_WITH_VERIFIED_MICROSOFT_PROVIDER_ID"
+        }
+      }
+    ],
+    "require": [
+      {
+        "geo": {
+          "country_code": "US"
+        }
+      }
+    ]
+  },
+  "visitor_apps_to_create": [
+    {
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "allowed_idps": [
+        "REPLACE_WITH_VERIFIED_GOOGLE_PROVIDER_ID",
+        "REPLACE_WITH_VERIFIED_MICROSOFT_PROVIDER_ID"
+      ],
+      "eager_redirect_cookie_setting": true,
+      "http_only_cookie_attribute": true,
+      "options_preflight_bypass": true,
+      "app_launcher_visible": false,
+      "name": "portfolio visitors production",
+      "destinations": [
+        {
+          "type": "public",
+          "uri": "brandenfarmer.com"
+        },
+        {
+          "type": "public",
+          "uri": "api.brandenfarmer.com"
+        }
+      ],
+      "policies": [
+        {
+          "id": "REPLACE_WITH_NEW_VISITOR_US_POLICY_ID",
+          "precedence": 1
+        }
+      ]
+    },
+    {
+      "type": "self_hosted",
+      "session_duration": "12h",
+      "allowed_idps": [
+        "REPLACE_WITH_VERIFIED_GOOGLE_PROVIDER_ID",
+        "REPLACE_WITH_VERIFIED_MICROSOFT_PROVIDER_ID"
+      ],
+      "eager_redirect_cookie_setting": true,
+      "http_only_cookie_attribute": true,
+      "options_preflight_bypass": true,
+      "app_launcher_visible": false,
+      "name": "portfolio visitors preview",
+      "destinations": [
+        {
+          "type": "public",
+          "uri": "preview.brandenfarmer.com"
+        },
+        {
+          "type": "public",
+          "uri": "api-preview.brandenfarmer.com"
+        }
+      ],
+      "policies": [
+        {
+          "id": "REPLACE_WITH_NEW_VISITOR_US_POLICY_ID",
+          "precedence": 1
+        }
+      ]
+    }
+  ],
+  "owner_policy_to_create": {
+    "name": "portfolio exact owner and US",
+    "decision": "allow",
+    "include": [
+      {
+        "email": {
+          "email": "branden_farmer@live.com"
+        }
+      }
+    ],
+    "require": [
+      {
+        "geo": {
+          "country_code": "US"
+        }
+      }
+    ]
+  },
+  "owner_apps_to_update": [
+    {
+      "environment": "production",
+      "existing_app_id": "db977420-b11d-4c07-8340-42271473755c",
+      "preserve_aud": "8dca71ab16ffff43fbb436291bae7b9756a4495a5e631c39ebea4226320df564",
+      "merge_into_existing_app": {
+        "allowed_idps": [
+          "a4b44d0e-654a-44f8-9caa-f6cadc52520f"
+        ],
+        "path_cookie_attribute": true,
+        "eager_redirect_cookie_setting": true,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": true,
+        "policies": [
+          {
+            "id": "REPLACE_WITH_NEW_PORTFOLIO_OWNER_US_POLICY_ID",
+            "precedence": 1
+          }
+        ]
+      }
+    },
+    {
+      "environment": "preview",
+      "existing_app_id": "447184cc-a644-491d-a763-c63ef65ce833",
+      "preserve_aud": "14fecc1ea27133e0e949f3ed09435cc162fd35f6e44881942148b97dde024f9b",
+      "merge_into_existing_app": {
+        "allowed_idps": [
+          "a4b44d0e-654a-44f8-9caa-f6cadc52520f"
+        ],
+        "path_cookie_attribute": true,
+        "eager_redirect_cookie_setting": true,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": true,
+        "policies": [
+          {
+            "id": "REPLACE_WITH_NEW_PORTFOLIO_OWNER_US_POLICY_ID",
+            "precedence": 1
+          }
+        ]
+      }
+    }
+  ],
+  "pages_app_to_create": {
+    "name": "portfolio Pages owner US",
+    "type": "self_hosted",
+    "session_duration": "12h",
+    "allowed_idps": [
+      "a4b44d0e-654a-44f8-9caa-f6cadc52520f"
+    ],
+    "eager_redirect_cookie_setting": false,
+    "http_only_cookie_attribute": true,
+    "options_preflight_bypass": true,
+    "app_launcher_visible": false,
+    "destinations": [
+      {
+        "type": "public",
+        "uri": "branden-farmer-portfolio.pages.dev"
+      },
+      {
+        "type": "public",
+        "uri": "*.branden-farmer-portfolio.pages.dev"
+      }
+    ],
+    "policies": [
+      {
+        "id": "REPLACE_WITH_NEW_PORTFOLIO_OWNER_US_POLICY_ID",
+        "precedence": 1
+      }
+    ]
+  },
+  "cal_bypass_policy_to_create": {
+    "name": "portfolio signed Cal transport",
+    "decision": "bypass",
+    "include": [
+      {
+        "everyone": {}
+      }
+    ]
+  },
+  "cal_apps_to_create": [
+    {
+      "name": "portfolio Cal production",
+      "type": "self_hosted",
+      "destinations": [
+        {
+          "type": "public",
+          "uri": "api.brandenfarmer.com/api/webhooks/cal"
+        }
+      ],
+      "policies": [
+        {
+          "id": "REPLACE_WITH_NEW_CAL_BYPASS_POLICY_ID",
+          "precedence": 1
+        }
+      ]
+    },
+    {
+      "name": "portfolio Cal preview",
+      "type": "self_hosted",
+      "destinations": [
+        {
+          "type": "public",
+          "uri": "api-preview.brandenfarmer.com/api/webhooks/cal"
+        }
+      ],
+      "policies": [
+        {
+          "id": "REPLACE_WITH_NEW_CAL_BYPASS_POLICY_ID",
+          "precedence": 1
+        }
+      ]
+    }
+  ],
+  "waf_rule_to_add_to_existing_zone_ruleset": {
+    "description": "Portfolio US-only including Cal delivery",
+    "action": "block",
+    "expression": "(http.host in {\"brandenfarmer.com\" \"www.brandenfarmer.com\" \"preview.brandenfarmer.com\" \"api.brandenfarmer.com\" \"api-preview.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+  },
+  "www": "redirect-only to https://brandenfarmer.com preserving path/query; not an eager-cookie destination"
+}

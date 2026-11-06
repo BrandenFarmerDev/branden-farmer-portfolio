@@ -52,6 +52,21 @@ jobs:
       - name: Test secret scanner failure path
         run: npm run test:security-scan
 
+      - name: Set up official CodeQL CLI
+        id: codeql
+        uses: github/codeql-action/init@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
+        with:
+          languages: javascript-typescript
+          config-file: .github/codeql-config.yml
+
+      - name: Test source scan and Access probe failure paths
+        run: npm run test:source-scan && npm run test:access
+
+      - name: Scan maintained source with security-extended queries
+        env:
+          CODEQL_BINARY: ${{ steps.codeql.outputs.codeql-path }}
+        run: npm run source:scan
+
       - name: Scan release-eligible source for secrets
         run: npm run secrets:source
 
@@ -69,6 +84,9 @@ jobs:
 
       - name: Build production artifacts
         run: npm run build
+
+      - name: Verify built protected-content cache headers
+        run: npm run test:headers
 
       - name: Scan built frontend artifact for secrets
         run: npm run secrets:build
@@ -120,6 +138,8 @@ jobs:
       - name: Validate production configuration
         shell: bash
         env:
+          ACCESS_ROLLOUT_STATE: ${{ vars.ACCESS_ROLLOUT_STATE }}
+          ACCESS_BOOTSTRAP_DEADLINE: ${{ vars.ACCESS_BOOTSTRAP_DEADLINE }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_PAGES_PROJECT: ${{ vars.CLOUDFLARE_PAGES_PROJECT }}
@@ -127,6 +147,7 @@ jobs:
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
           VITE_POWER_BI_EMBED_URL: ${{ vars.VITE_POWER_BI_EMBED_URL }}
         run: |
+          node --input-type=module -e "import { rolloutMode } from './scripts/access-probe.mjs'; rolloutMode(process.env);"
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Missing production secret CLOUDFLARE_ACCOUNT_ID"; exit 1; }
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Missing production secret CLOUDFLARE_API_TOKEN"; exit 1; }
           test -n "$CLOUDFLARE_PAGES_PROJECT" || { echo "::error::Missing production variable CLOUDFLARE_PAGES_PROJECT"; exit 1; }
@@ -178,46 +199,6 @@ jobs:
           workingDirectory: app/backend
           command: deploy --env production
 
-      - name: Verify production Worker
-        shell: bash
-        run: >-
-          curl --fail --show-error --silent
-          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
-          https://api.brandenfarmer.com/api/health
-
-      - name: Verify production Ask configuration
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            status=$(curl --show-error --silent --max-time 20 \
-              --output "$RUNNER_TEMP/ask-smoke.json" --write-out '%{http_code}' \
-              --request POST https://api.brandenfarmer.com/api/ask \
-              --header 'Origin: https://brandenfarmer.com' \
-              --header 'Content-Type: application/json' --data '{}') || status=000
-            if [[ "$status" == 400 ]] && jq -e '.error == "validation_error"' "$RUNNER_TEMP/ask-smoke.json" > /dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::Production Ask is not ready (HTTP $status)"
-          exit 1
-
-      - name: Verify production Cal webhook configuration
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            status=$(curl --show-error --silent --max-time 20 \
-              --output "$RUNNER_TEMP/cal-smoke.json" --write-out '%{http_code}' \
-              --request POST https://api.brandenfarmer.com/api/webhooks/cal \
-              --header 'Content-Type: application/json' --data '{}') || status=000
-            if [[ "$status" == 401 ]] && jq -e '.error == "invalid_signature"' "$RUNNER_TEMP/cal-smoke.json" > /dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::Production Cal webhook is not ready (HTTP $status)"
-          exit 1
-
       - name: Deploy production frontend
         id: deploy-pages
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
@@ -227,20 +208,15 @@ jobs:
           command: pages deploy app/frontend/dist --project-name=${{ vars.CLOUDFLARE_PAGES_PROJECT }} --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Verify Pages deployment URL
-        shell: bash
+      - name: Verify production access boundary
         env:
-          DEPLOYMENT_URL: ${{ steps.deploy-pages.outputs.deployment-url }}
+          ACCESS_PROBE_ENVIRONMENT: production
+          ACCESS_ROLLOUT_STATE: ${{ vars.ACCESS_ROLLOUT_STATE }}
+          ACCESS_BOOTSTRAP_DEADLINE: ${{ vars.ACCESS_BOOTSTRAP_DEADLINE }}
+          ACCESS_DEPLOYMENT_URL: ${{ steps.deploy-pages.outputs.deployment-url }}
         run: |
-          test -n "$DEPLOYMENT_URL" || { echo "::error::Cloudflare Pages did not return a deployment URL"; exit 1; }
-          curl --fail --show-error --silent --location --retry 5 --retry-all-errors --retry-delay 5 --max-time 20 "$DEPLOYMENT_URL" > /dev/null
-
-      - name: Verify production site
-        shell: bash
-        run: >-
-          curl --fail --show-error --silent --location
-          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
-          https://brandenfarmer.com/ > /dev/null
+          test -n "$ACCESS_DEPLOYMENT_URL" || { echo "Missing Pages deployment URL"; exit 1; }
+          node scripts/access-probe.mjs
 
   deploy-preview:
     name: Deploy preview
@@ -273,8 +249,11 @@ jobs:
       - name: Validate preview configuration
         shell: bash
         env:
+          ACCESS_ROLLOUT_STATE: ${{ vars.ACCESS_ROLLOUT_STATE }}
+          ACCESS_BOOTSTRAP_DEADLINE: ${{ vars.ACCESS_BOOTSTRAP_DEADLINE }}
           VITE_TURNSTILE_SITE_KEY: ${{ vars.VITE_TURNSTILE_SITE_KEY }}
         run: |
+          node --input-type=module -e "import { rolloutMode } from './scripts/access-probe.mjs'; rolloutMode(process.env);"
           test -n "$VITE_TURNSTILE_SITE_KEY" || { echo "::error::Missing preview variable VITE_TURNSTILE_SITE_KEY"; exit 1; }
           case "$VITE_TURNSTILE_SITE_KEY" in replace_*|*placeholder*) echo "::error::VITE_TURNSTILE_SITE_KEY is still a placeholder"; exit 1;; esac
           if grep -q REPLACE_WITH_PREVIEW_D1_ID app/backend/wrangler.toml; then echo "::error::Set the preview D1 database_id"; exit 1; fi
@@ -316,48 +295,19 @@ jobs:
           command: deploy --env preview
 
       - name: Deploy preview frontend
+        id: deploy-pages
         uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: pages deploy app/frontend/dist --project-name=branden-farmer-portfolio --branch=preview
 
-      - name: Verify preview API
-        shell: bash
-        run: >-
-          curl --fail --show-error --silent
-          --retry 5 --retry-all-errors --retry-delay 5 --max-time 20
-          https://api-preview.brandenfarmer.com/api/health
-
-      - name: Verify preview Ask configuration
-        shell: bash
+      - name: Verify preview access boundary
+        env:
+          ACCESS_PROBE_ENVIRONMENT: preview
+          ACCESS_ROLLOUT_STATE: ${{ vars.ACCESS_ROLLOUT_STATE }}
+          ACCESS_BOOTSTRAP_DEADLINE: ${{ vars.ACCESS_BOOTSTRAP_DEADLINE }}
+          ACCESS_DEPLOYMENT_URL: ${{ steps.deploy-pages.outputs.deployment-url }}
         run: |
-          for attempt in 1 2 3 4 5; do
-            status=$(curl --show-error --silent --max-time 20 \
-              --output "$RUNNER_TEMP/ask-smoke.json" --write-out '%{http_code}' \
-              --request POST https://api-preview.brandenfarmer.com/api/ask \
-              --header 'Origin: https://preview.brandenfarmer.com' \
-              --header 'Content-Type: application/json' --data '{}') || status=000
-            if [[ "$status" == 400 ]] && jq -e '.error == "validation_error"' "$RUNNER_TEMP/ask-smoke.json" > /dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::Preview Ask is not ready (HTTP $status)"
-          exit 1
-
-      - name: Verify preview Cal webhook configuration
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            status=$(curl --show-error --silent --max-time 20 \
-              --output "$RUNNER_TEMP/cal-smoke.json" --write-out '%{http_code}' \
-              --request POST https://api-preview.brandenfarmer.com/api/webhooks/cal \
-              --header 'Content-Type: application/json' --data '{}') || status=000
-            if [[ "$status" == 401 ]] && jq -e '.error == "invalid_signature"' "$RUNNER_TEMP/cal-smoke.json" > /dev/null; then
-              exit 0
-            fi
-            sleep 5
-          done
-          echo "::error::Preview Cal webhook is not ready (HTTP $status)"
-          exit 1
+          test -n "$ACCESS_DEPLOYMENT_URL" || { echo "Missing Pages deployment URL"; exit 1; }
+          node scripts/access-probe.mjs

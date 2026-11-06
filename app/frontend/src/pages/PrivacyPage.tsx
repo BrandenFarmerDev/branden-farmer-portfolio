@@ -3,6 +3,14 @@ import { siteContent } from "../content/site";
 
 const sections = [
   {
+    title: "Portfolio sign-in",
+    items: [
+      "When portfolio sign-in is required, Cloudflare Access handles authentication and restricts access to US traffic. Your identity provider and Cloudflare handle authentication and session cookies; the portfolio does not store your password.",
+      "Cloudflare processes identity and network information for access decisions and security logs. The portfolio application does not copy visitor sign-in identities into its contact or booking database.",
+      "Signing out ends your session but cannot recall files you already downloaded. External Power BI reports and Cal.com pages have their own access and privacy settings.",
+    ],
+  },
+  {
     title: "Contact form",
     items: [
       "The form collects your name, email address, company, position, and message.",

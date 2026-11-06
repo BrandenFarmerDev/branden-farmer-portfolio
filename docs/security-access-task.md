@@ -1,0 +1,82 @@
+# Portfolio visitor access task
+
+- Outcome: require visitor authentication before portfolio entry, preferring Google and Microsoft with Cloudflare additionally available; allow US traffic only.
+- Starting revision: `aad7154b1b3063400c46948fbd331bab9c24e6c7`.
+- Branch: `bfarmer/security-required-login-us-only` (uses the existing CI development-branch pattern).
+- Risk: high, because authentication and access policies change. Full planner, independent critic, implementer, fresh risk-validator workflow applies; no stages skipped.
+- Milestone: reviewed branch/PR with locally validated app support and concrete Cloudflare rollout configuration. Live activation requires configured/tested IdPs, geography and booking-delivery evidence, and supporting application release through the existing approved-merge workflow.
+- Non-goals: custom password storage, unrelated application changes, changes to other Cloudflare applications, paid services, direct application deployments, or an unapproved PR merge.
+- Acceptance: deny unauthenticated portfolio content/API access; permit authenticated US visitors; deny non-US requests including existing sessions; retain owner-only records; close default Pages/Workers URL bypasses; preserve signed booking integration without silently exempting its geography; provide session recovery and accurate deployment checks.
+- Required guidance: global AGENTS.md and `C:/Users/BrandenFarmer/.codex/standards/pre-ship-checklist.md`.
+- Counters: planning 1/6, critique 0/6, implementation 0/6, quality 0/6. No extensions used.
+- Role presets requested: planner `gpt-6.1-sol/high`; critic `gpt-6-astra/high`; implementer `gpt-6.1-sol/medium`; risk validator `gpt-6-astra/xhigh`. Named roles are exposed. Executed-model metadata and per-role usage/cost telemetry are unavailable unless separately reported by the runtime; do not infer them from self-report.
+
+## Initial evidence
+
+Cloudflare inspection on 2026-11-05 found only owner-path Access apps for this portfolio. The only IdP is the shared Cloudflare provider, restricted to account members. Preserve that provider and its shared owner policy; other applications use both. Production and preview API Worker default URLs and previews are already disabled. Portfolio Pages default and wildcard deployment URLs need protection. No zone custom WAF ruleset exists.
+
+Adaptive request groups for 2026-11-04 UTC at the apex include Hong Kong traffic and Russian WordPress probes, plus US environment-file probes. A direct read-only comparison of `/`, `/.env`, and `/wp-admin/install.php` returned identical 1906-byte HTML with SHA-256 `cf578963209fd7c72c59ee1cfa38c7df558dc6168a585b355b34642e28110a1d`. These sampled `200` responses are the SPA fallback, not evidence of leaked environment files.
+
+Browser Use read-only inspection found Google Cloud Console and Microsoft Entra require human sign-in. No OAuth applications or providers were created. Google/Microsoft readiness remains unverified until registration and end-to-end tests.
+
+The checkout has an installed `.git/hooks/pre-push` invoking `scripts/pre-push.js`, which rejects dirty/non-HEAD publication and runs `npm run quality`. CI repeats lint, hook/scanner failure tests, source/build secret scans, coverage, duplication, type checking, build, corpus checks and dependency audit. Gitleaks 8.29.1 is available at `C:/Users/BrandenFarmer/.cache/tools/gitleaks/8.29.1/gitleaks.exe`. Changed-line coverage is not currently provided by repository tooling; do not claim it was measured.
+
+No live configuration writes, commits, pushes, or PRs have occurred in this task. All newly authored commits/PRs must use the configured human identity, current Los Angeles timestamp with UTC offset, and no AI attribution.
+
+## Planner pass 1
+
+Requested role: `standards_planner` (`gpt-6.1-sol/high` preset). Runtime executed-model metadata unavailable. Planning complete, critique pass 1 in progress.
+
+Smallest design: edge Access, separate visitor applications for concrete production and preview hosts, explicit approved login methods with **Require Country US**, eager multi-domain cookies, exact-origin preflight bypass to the existing Worker. Do not implement another visitor JWT/session service. Preserve owner AUD/email checks and attach a portfolio-specific exact-owner-plus-US policy instead of altering shared settings. Protect root and wildcard Pages deployment hostnames with owner-plus-US access; keep Worker default/preview URLs disabled. Scope the non-US WAF block to the five portfolio custom hosts. Keep Cal signature authentication and US-only geography; its Access path bypass inherits to descendants, which must remain harmless at the existing exact-path/method Worker router.
+
+Frontend support: include credentials for health/contact, add useful API sign-in/reload recovery following existing owner patterns, update privacy language. CI must distinguish Access challenges from authenticated application health, never counting followed login HTML as a health pass. Maintain deployment and release documentation. Supply nonsecret concrete configuration templates, provider prerequisites, snapshots, rollout, validation and rollback instructions.
+
+Acceptance IDs: A1 signed-out denial for content/assets/PDF/API and aliases; A2 independent Google/Microsoft/optional Cloudflare ordinary-US-visitor login with functioning APIs; A3 non-US/unknown-country denial including existing sessions; A4 owner privilege isolation; A5 alternate-host bypass closure; A6 genuine US signed Cal delivery and rejection tests; A7 session recovery and preflight correctness; A8 honest probe investigation and secret scans; A9 all local gates plus fresh independent high-risk review and truthful CI health; A10 exact configuration identity, rollout and recovery evidence.
+
+Live A1–A7 and A10 behavior remains a release blocker until tested against the deployed configuration. The code-only milestone can establish supporting-code and configuration-review readiness, never live enablement. Required live checks include provider account types, foreign egress, cookie flows, Pages aliases, signed Cal delivery geography, alert routing and critical recovery exercise.
+
+Expected touched areas: frontend API/status/privacy and behavior tests; explicit Worker URL settings; CI smoke checks; deployment/release/architecture documentation; nonsecret Access/WAF manifest; dependency manifests/lock for required security repair. No unrelated application changes or schema migration.
+
+Targeted checks: frontend API/status/contact/App tests; backend router/owner/Cal tests; typecheck; `git diff --check`. Validator owns one authoritative `npm run quality` per frozen candidate, production Worker dry run, corpus generation and source/security scan. Shared code quality checklist and every stable pre-ship checklist ID require explicit evidence/disposition in the quality record. Gitleaks PATH must include its pinned tool directory. Actual changed-line measurement remains unavailable in existing tooling.
+
+Baseline audit: `npm.cmd audit --json` found 15 vulnerabilities (12 moderate, 3 high), recorded in ignored `reports/security-access-audit-initial.json`. Repair via same-major patched dependencies and lockfile; do not accept forced downgrades suggested by npm or weaken severity gates. Local source-security scanning is not yet in the local quality command (hosted CodeQL exists); the missing local evidence/enforcement must be resolved or the push remains blocked. Discovery/repair remains bounded by the existing phase budgets and one-failed-focused-measurement-repair rule.
+
+## Critic pass 1 and accepted resolutions
+
+Requested `standards_critic` (`gpt-6-astra/high` preset); executed-model/effort telemetry unavailable. Counters: plan 1/6, critique 1/6, implementation 0/6, quality 0/6. Six blockers were identified and resolved in the implementation contract below; live-only exercises remain release blockers.
+
+1. **Account-wide provider effects:** existing applications with empty `allowed_idps` inherit newly registered providers. Inventory all relying applications before creating an IdP; pin both portfolio owner apps explicitly to the original restrictive provider and exact email/US. Confirm a second Cloudflare provider is supported. If isolation needs changes to unrelated applications, stop live creation and obtain that separate scope authorization. Do not weaken the shared provider as a fallback. Code/configuration preparation proceeds without creating providers.
+2. **Protected caches:** replace public cache directives with `private, no-store` across HTML, assets and PDF, and correct documentation. Test effective built headers; live validation includes warm browser/shared-cache behavior after sign-out. Previously downloaded content cannot be recalled.
+3. **Cookies, canonical host and CORS:** keep `www` redirect-only outside eager apex/API destinations. Scope owner cookies appropriately to the owner paths or require proven supported behavior; explicitly configure owner and visitor OPTIONS handling. Test visitor-to-owner-to-visitor in one browser before activation. US/non-US canonical redirects must match the country policy without exposing content.
+4. **Deployment bootstrap:** use an explicit environment rollout state with a finite bootstrap deadline and strict response contracts; no indefinitely permissive `200 OR challenge` check. Before activation verify the existing public application response; after activation require the exact Access team login challenge on unauthenticated requests. Authenticated health and actual Cal delivery are separate checks; a WAF 403 is never proof of business health. Keep machine credentials narrowly scoped; do not add broad service-token exemptions. Production workflow order and rollout instructions must avoid circular first-release dependencies.
+5. **Shared Access seats:** verify plan/current usage/remaining capacity and anticipated visitor volume before activation. No paid upgrade, shared seat removal or expiration changes are authorized. Missing capacity evidence blocks activation, not supporting-code preparation.
+6. **Webhook preflight:** generic OPTIONS currently precedes webhook dispatch. Narrow the documented bypass contract to content-free exact-origin preflight; preserve tests for exact signed POST, unsigned POST, GET, OPTIONS, descendants and normalized sibling routes. No descendant or sibling may access protected business data through the bypass.
+
+Optional improvements are deferred. No speculative auth framework or broad load-testing work is authorized. External Power BI and Cal-hosted content remains outside the portfolio gate; document this limit.
+
+Parent will install the supported official Windows CodeQL CLI outside the repository (verified release digest) for the required source gate. This is bounded tooling setup, not a new measurement system. Existing official query packs may be reused only with a fresh database for the final candidate.
+
+## Critic pass 2: dependency override resolution
+
+The parent accepted the critic's narrow compatibility condition for GHSA-g3hv-75wg-m249: the available fix requires minimatch 11.0.1, while the affected typescript-eslint parent is 8.72.1. A temporary version-qualified override applies only to `@typescript-eslint/typescript-estree@8.72.1`, not unrelated ESLint minimatch 3 consumers. The parent approved this exception to the original same-major repair preference. The named CommonJS `.minimatch` call was tested with dot-file inclusion and nested-path exclusion; both passed. Undici's existing Wrangler/Miniflare override is updated to patched 7.30.1. No forced audit fix or downgrade was used. Remove the temporary estree override when upstream declares a patched compatible dependency.
+
+## Implementation pass 1 evidence and handoff
+
+Counters: planning 1/6, critique 2/6, implementation 1/6, quality 0/6. No extensions used. Requested implementer preset: `standards_implementer`, `gpt-6.1-sol/medium`. Executed model/effort metadata and per-role uncached/cached/cache-write/output/reasoning tokens, measured charges and elapsed-time telemetry remain unavailable; requested settings are not runtime confirmation. No delegation occurred in implementation.
+
+Implemented supporting app credentials/session recovery, validated health shape, private no-store frontend headers, explicit disabled Worker alternate URLs, privacy/demo wording, finite bootstrap/enforced CI contracts and nonsecret review configuration/runbook. The existing exact webhook router and owner JWT controls remain unchanged; regression tests exercise exact signed POST, unsigned POST, GET, preflight, inherited descendants and normalized sibling routes. Bootstrap retains health JSON, actual portfolio HTML, Ask `400 validation_error` and unsigned Cal `401 invalid_signature` contracts. Enforced checks require the pinned team/application challenge, with authenticated health and genuine Cal delivery remaining separate release checks. Rollout state/deadline validation occurs before deployment mutations.
+
+Targeted implementation checks (not independent full quality):
+
+- `npm run test --workspace @portfolio/frontend -- src/lib/api.test.ts src/components/ApiStatus.test.tsx src/components/ContactForm.test.tsx src/App.test.tsx src/pages/OwnerPage.test.tsx`: 5 files, 39 tests passed.
+- `npm run test --workspace @portfolio/backend -- src/index.test.ts src/routes/cal-webhook.test.ts src/services/access.test.ts src/routes/owner.test.ts`: 3 existing files, 17 tests passed. No standalone services/access test file exists; owner tests exercise Access JWT validation.
+- `npm run lint` and `npm run typecheck`: passed; lint repeated after final script changes. `node --check` for both new executable scanner/probe scripts passed.
+- `npm run test:source-scan`: 2 failure/clean-report tests passed. `npm run test:access`: 4 tests passed, including strict bootstrap Ask/Cal contracts. `npm run build --workspace @portfolio/frontend` and `npm run test:headers`: passed (1 built-artifact header regression).
+- Initial actual CodeQL tool compatibility check: official CLI 2.27.4, pinned JavaScript query pack 2.4.7, security-extended suite, fresh database; scanned 103/103 JS/TS files, zero results. Log `reports/security-access-source-tool-check.log`; SARIF `reports/codeql-PfBUnU/source.sarif`. This predates the final script edit; the fresh validator must run the authoritative gate on the frozen candidate. No focused source-measurement repair was required.
+- `npm run secrets:source` with Gitleaks 8.29.1: zero leaks. `npm audit --json`: zero vulnerabilities at every severity, evidence `reports/security-access-audit-final.json` (baseline15 in `reports/security-access-audit-initial.json`).
+- `npm ls minimatch undici --all`: clean tree; estree minimatch11.0.1, unrelated ESLint minimatch3.1.5, Miniflare undici7.30.1 and root undici8.12.4. Direct `createRequire` checks confirmed estree resolution and CommonJS glob behavior. Final lockfile `npm ci` is required/evidenced in the handoff.
+- Existing transitive `js-yaml` parsed CI and CodeQL configuration successfully; JSON manifest loaded. The first optional parser lookup (`yaml`) was unavailable; the supported already-installed parser succeeded without adding a dependency. `git diff --check` passed after removing an extra trailing workflow blank line.
+
+Initial CodeQL scan, audit, and Cloudflare exports are ignored evidence; the parent owns final candidate identity and independent quality. The installed `.git/hooks/pre-push` invokes `scripts/pre-push.js` with no alternate core.hooksPath; final full hook/failure-path, coverage, duplication, source/build secret scans, type/build and audit enforcement remain the fresh validator's authoritative gate. Changed-line coverage is unavailable in repository tooling and was not measured.
+
+No live provider/configuration writes, deployment, commit or push occurred during implementation. Supporting-code review does not claim activation: unrelated applications inherit newly registered providers until separately authorized isolation; OAuth registration and supported Microsoft personal/work behavior, optional Cloudflare provider isolation, Access seat capacity, live cookie/cache/geography/Cal checks, alert routing and critical recovery remain explicit activation blockers in `docs/visitor-access-setup.md`. Full gate and every applicable checklist disposition remain pending fresh high-risk validation.
