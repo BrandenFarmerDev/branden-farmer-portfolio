@@ -5,7 +5,7 @@ const sections = [
   {
     title: "Portfolio sign-in",
     items: [
-      "When portfolio sign-in is required, Cloudflare Access handles authentication and restricts access to US traffic. Your identity provider and Cloudflare handle authentication and session cookies; the portfolio does not store your password.",
+      "When portfolio sign-in is enabled, Cloudflare Access verifies your email with a single-use PIN and restricts access to US traffic. PINs expire in 10 minutes. Access sessions are configured for 24 hours, with separate identity and application token renewal; the portfolio does not store your password or PIN.",
       "Cloudflare processes identity and network information for access decisions and security logs. The portfolio application does not copy visitor sign-in identities into its contact or booking database.",
       "Signing out ends your session but cannot recall files you already downloaded. External Power BI reports and Cal.com pages have their own access and privacy settings.",
     ],

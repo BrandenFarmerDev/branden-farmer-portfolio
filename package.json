@@ -26,7 +26,7 @@
     "quality": "npm run lint && npm run test:hooks && npm run test:security-scan && npm run test:source-scan && npm run test:access && npm run source:scan && npm run secrets:source && npm run test:coverage && npm run duplication && npm run typecheck && npm run build && npm run test:headers && npm run secrets:build && npm run audit",
     "test:source-scan": "node --test scripts/source-scan.test.mjs",
     "source:scan": "node scripts/source-scan.mjs",
-    "test:access": "node --test scripts/access-probe.test.mjs",
+    "test:access": "node --test scripts/access-probe.test.mjs scripts/access-config.test.mjs && node scripts/access-config.mjs",
     "test:headers": "node --test scripts/protected-headers.test.mjs"
   },
   "devDependencies": {
