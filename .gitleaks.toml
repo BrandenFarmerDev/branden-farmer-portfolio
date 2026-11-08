@@ -26,6 +26,6 @@ regexes = [
 description = "Reviewed against Jobs policy 918c5c71-87e0-4743-98d9-5ef5c807c640: this exact service_token.token_id is a nonsecret resource UUID, not a client ID or credential."
 condition = "AND"
 targetRules = [ "generic-api-key" ]
-paths = [ '''(^|/)(scripts/access-config\.mjs|docs/visitor-access-config\.json)$''' ]
+paths = [ '''^(scripts/access-config\.mjs|docs/visitor-access-config\.json)$''' ]
 regexTarget = "secret"
 regexes = [ '''^f50e39f8-f375-4cd8-b48b-841bbcea2255$''' ]

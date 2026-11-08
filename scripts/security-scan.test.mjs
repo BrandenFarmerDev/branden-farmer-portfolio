@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import test from "node:test";
 
 test("the scanner rejects credentials in settings and built artifacts while allowing only reviewed audience IDs", async () => {
@@ -48,6 +48,8 @@ test("the scanner rejects credentials in settings and built artifacts while allo
 test("the reviewed resource UUID exception is restricted to its exact value, rule and two configuration paths", async () => {
   const directory = await mkdtemp(join(tmpdir(), "portfolio-resource-id-test-"));
   const paths = ["scripts/access-config.mjs", "docs/visitor-access-config.json"];
+  const unreviewedPaths = ["unreviewed/fixture.json", "unreviewed/scripts/access-config.mjs", "unreviewed/docs/visitor-access-config.json"];
+  const configPath = resolve(".gitleaks.toml");
   const reviewedResourceId = ["f50e39f8", "f375", "4cd8", "b48b", "841bbcea2255"].join("-");
   const syntheticSecret = ["qM7vD4rX9p", "L2nB6sT0wK", "5cF8hJ1zA3", "eG6uV9yN2d"].join("");
   const reportPath = join(directory, "findings.json");
@@ -56,22 +58,28 @@ test("the reviewed resource UUID exception is restricted to its exact value, rul
       await mkdir(join(directory, path.split("/")[0]), { recursive: true });
       await writeFile(join(directory, path), `const service_token = { token_id: "${reviewedResourceId}" };\nconst api_key = "${syntheticSecret}";\n`);
     }
-    await writeFile(join(directory, "docs/unreviewed.json"), `{"token_id":"${reviewedResourceId}"}\n`);
+    for (const path of unreviewedPaths) {
+      await mkdir(join(directory, dirname(path)), { recursive: true });
+      await writeFile(join(directory, path), `{"token_id":"${reviewedResourceId}"}\n`);
+    }
     const result = spawnSync(process.env.GITLEAKS_BINARY || "gitleaks", [
-      "dir", "--config", ".gitleaks.toml", "--redact", "--no-banner", "--no-color",
-      "--report-format", "json", "--report-path", reportPath, directory,
-    ], { encoding: "utf8" });
+      "dir", "--config", configPath, "--redact", "--no-banner", "--no-color",
+      "--report-format", "json", "--report-path", reportPath, ".",
+    ], { encoding: "utf8", cwd: directory });
     assert.ifError(result.error);
     assert.equal(result.status, 1, "actual credential patterns must still fail in the excepted paths");
     const findings = JSON.parse(await readFile(reportPath, "utf8"));
-    assert.equal(findings.length, 3);
+    assert.equal(findings.length, 5);
     for (const path of paths) {
-      const credentials = findings.filter(f => f.RuleID === "generic-api-key" && f.File.endsWith(path));
+      const credentials = findings.filter(f => f.RuleID === "generic-api-key" && f.File === path);
       assert.equal(credentials.length, 1, `only the reviewed resource identifier may be omitted in ${path}`);
       assert.equal(credentials[0].StartLine, 2, "the API-key fixture must be detected, not the reviewed first-line resource UUID");
     }
-    assert.equal(findings.filter(f => f.RuleID === "generic-api-key" && f.File.endsWith("docs/unreviewed.json")).length, 1,
-      "the same UUID is not exempt in an unreviewed path");
+    for (const path of unreviewedPaths) {
+      const identifiers = findings.filter(f => f.RuleID === "generic-api-key" && f.File === path);
+      assert.equal(identifiers.length, 1, `the same UUID is not exempt in ${path}`);
+      assert.equal(identifiers[0].StartLine, 1);
+    }
     assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, new RegExp(syntheticSecret));
   } finally {
     await rm(directory, { recursive: true, force: true });
