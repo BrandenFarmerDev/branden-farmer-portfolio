@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiRequestError } from "../lib/api";
 import { AskPage } from "./AskPage";
+import { ApiStatus } from "../components/ApiStatus";
 
 const mocks = vi.hoisted(() => ({ submitAsk: vi.fn(), getAskStatus: vi.fn() }));
 
@@ -38,6 +39,28 @@ describe("AskPage", () => {
   });
 
   afterEach(() => vi.useRealTimers());
+
+  it("offers recovery after initial health succeeds and a later Ask request loses its API session", async () => {
+    mocks.submitAsk.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+    const user = userEvent.setup();
+    const { unmount } = render(<MemoryRouter><AskPage /><ApiStatus /></MemoryRouter>);
+    await screen.findByText("API available at page load");
+    expect(screen.queryByRole("link", { name: "Sign in to the portfolio API" })).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText("Question"), "Power BI experience?");
+    await user.click(screen.getByRole("button", { name: "Complete security check" }));
+    await user.click(screen.getByRole("button", { name: "Ask Branden" }));
+    const recovery = await screen.findByRole("link", { name: "Sign in to the portfolio API" });
+    expect(recovery).toHaveAttribute("href", "http://localhost:8787/api/health");
+    expect(recovery).toHaveAttribute("target", "_blank");
+    expect(recovery).toHaveAttribute("rel", "noopener noreferrer");
+    expect(screen.getByLabelText("Question")).toHaveValue("Power BI experience?");
+    expect(screen.getByText(/then return and reload this page/)).toBeInTheDocument();
+    unmount();
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ status: "ok", service: "portfolio-api", timestamp: new Date().toISOString() }));
+    render(<MemoryRouter><AskPage /><ApiStatus /></MemoryRouter>);
+    await screen.findByText("API available at page load");
+    expect(screen.queryByRole("link", { name: "Sign in to the portfolio API" })).not.toBeInTheDocument();
+  });
 
   it("ignores a status read started before a newer submission", async () => {
     let finishStatus!: (value: { aiEnabled: boolean; allowance: ReturnType<typeof allowance> }) => void;

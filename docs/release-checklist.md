@@ -20,7 +20,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] Production and preview D1 databases exist, their IDs are in `wrangler.toml`, and the deploy token has D1 Edit.
 - [ ] `ASK_SIGNING_SECRET`, `CAL_WEBHOOK_SECRET`, `ACCESS_TEAM_DOMAIN`, `ACCESS_AUD`, and `CAL_EVENT_TYPE_ID` are set per environment.
 - [ ] The production Cal.com event webhook is enabled for created, rescheduled, and canceled bookings, points to the production API, and uses the production Worker's `CAL_WEBHOOK_SECRET`.
-- [ ] Cloudflare Access protects only `/owner` and `/api/owner`, allows only the owner, and bypasses OPTIONS.
+- [ ] Owner Access apps preserve their existing IDs/AUDs, offer only the prepared OTP provider and attach the new exact-owner+OTP+US policy with 24h human sessions and WARP authentication off; retain original provider/policy unchanged for guarded recovery; OPTIONS bypass remains content-free and exact-origin. During finite bootstrap only, visitor protection may still be inactive; active-gate release requires the complete visitor rollout below.
 - [ ] The [owner Access guide](owner-access-setup.md) is complete: each environment's page and API share an application, its AUD matches the Worker, and Eager redirect cookie is enabled.
 - [ ] Preview Pages has a successful `preview` branch upload and a proxied `preview` CNAME pointing to its branch alias, not the production Pages hostname.
 - [ ] The manual preview workflow can be dispatched from GitHub; the default-branch workflow prerequisite is resolved before relying on the Run workflow button.
@@ -34,7 +34,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] Each Ask evidence link opens the exact rÃ©sumÃ© or About passage, highlights it, and moves focus to it; Back restores the previous answer.
 - [ ] The privacy notice matches the retention periods (12 months, 7 days, 90 days).
 - [ ] Canonical URL, sitemap, and metadata use `https://brandenfarmer.com`.
-- [ ] Job Search Intelligence demo smoke test on the deployed site: `/projects/job-search-intelligence` and a nested route (for example `/review`) load directly without a login; a browser network inventory during search, add, edit, merge, review, sync, delete, reset and CSV export shows no request beyond static assets; searched text never appears in the address bar; the Back to portfolio link works and portfolio pages show no demo styling; the private Job Search Intelligence application remains behind Cloudflare Access. Roll back with Cloudflare's rollback controls and a reviewed revert, as described in the deployment guide.
+- [ ] Job Search Intelligence demo smoke test on the deployed site: `/projects/job-search-intelligence` and a nested route (for example `/review`) load directly after approved US visitor login once the gate is active (public loading is permitted only during the explicit finite bootstrap); after sign-in, a browser network inventory during search, add, edit, merge, review, sync, delete, reset and CSV export shows no request beyond static assets; searched text never appears in the address bar; the Back to portfolio link works and portfolio pages show no demo styling; the private Job Search Intelligence application remains behind Cloudflare Access. Roll back with Cloudflare's rollback controls and a reviewed revert, as described in the deployment guide.
 
 ## Core browser flows
 
@@ -48,7 +48,7 @@ Use this checklist for a reviewed preview and again before a production release.
 - [ ] With answers enabled in preview, the Ask counter shows 0 of 5 on first load and increments per answer; the sixth question from one browser is declined, the button is disabled with its reset time, and the evaluation set is reviewed for citation accuracy and phone-connection latency.
 - [ ] A Cal.com test booking creates, reschedules, and cancels one history record; duplicate deliveries are ignored.
 - [ ] Loading `/owner` or `/api/owner/contacts` directly while signed out is blocked by Access.
-- [ ] After owner login in a normal browser session, page-to-API reads and mutations succeed; public homepage and health routes still work while signed out.
+- [ ] After owner login in a normal browser session, page-to-API reads and mutations succeed; homepage and health routes require visitor Access while signed out.
 
 ## Security and operations
 
@@ -62,7 +62,17 @@ Use this checklist for a reviewed preview and again before a production release.
 ## Performance and recovery
 
 - [ ] Home does not eagerly load the Contact/Cal.com route chunk.
-- [ ] Profile photo and hashed assets retain their intended cache headers.
+- [ ] HTML, profile photo, hashed assets and résumé PDF return `Cache-Control: private, no-store`; test warm caches after sign-out.
 - [ ] No browser console error appears during the core flows.
 - [ ] The previous Pages and Worker versions are identifiable for rollback before publishing.
-- [ ] After merge, the `Deploy production` job follows `Quality gates` and its Worker, Pages deployment, and public-domain health checks all pass.
+- [ ] After merge, the `Deploy production` job follows `Quality gates` and its Worker, Pages deployment, and Access-boundary checks all pass; separately record authenticated application health and genuine Cal delivery.
+
+## All-application email PIN and geography activation
+
+- [ ] Complete every prerequisite and live acceptance exercise in [visitor access rollout](visitor-access-setup.md), including ordinary verified-email OTP visitors, owner isolation, US/non-US existing sessions, Pages aliases, expired-session recovery, signed Cal geography and seat capacity.
+- [ ] Set each GitHub environment `ACCESS_ROLLOUT_STATE=enforced` after activation; remove `ACCESS_BOOTSTRAP_DEADLINE`. Bootstrap expires no later than 2026-11-12T08:00:00Z and is not protected-site readiness.
+
+- [ ] Jobs and Municipal remain exact-owner only after OTP; every thirteen-host WAF stage is separately reviewed, and all Pages root/wildcard/actual preview aliases are protected.
+- [ ] Global/application/human-policy sessions are explicitly 24h with WARP bypass off; actual renewal, per-app old-session cutoff and post-cutoff owner recovery are evidenced. PINs are single-use and expire in 10 minutes.
+- [ ] Jobs retains its existing narrow automation token/common_name and bounded authority, with mandatory Require-US accepted/read back and real US/off-zone checks. Gmail/Microsoft data integrations and existing handshake state remain intact.
+- [ ] Before pilot binding, secure human code entry and independent control-plane recovery are verified. A 302/code-sent page does not prove delivery, non-owner denial or authenticated geography.

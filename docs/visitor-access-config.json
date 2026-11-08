@@ -1,0 +1,736 @@
+{
+  "status": "REVIEWED PREPARATION ONLY: provider and human policies created unbound; app/global/machine/WAF/cutoff changes NOT applied",
+  "team_domain": "cold-union-464d.cloudflareaccess.com",
+  "otp_provider": {
+    "id": "866c6dd8-12c1-47a5-9c95-dab5abfea0d7",
+    "type": "onetimepin"
+  },
+  "rollback_provider_id": "a4b44d0e-654a-44f8-9caa-f6cadc52520f",
+  "rollback_owner_policy_id": "2f08f97a-f619-47d4-abd1-dbe6ca15a943",
+  "organization_request": {
+    "allow_authenticate_via_warp": false,
+    "auth_domain": "cold-union-464d.cloudflareaccess.com",
+    "deny_unmatched_requests": false,
+    "deny_unmatched_requests_exempted_zone_names": [],
+    "disable_end_user_app_creation": false,
+    "is_ui_read_only": false,
+    "login_design": {},
+    "name": "cold-union-464d.cloudflareaccess.com",
+    "strict_service_token_auth": false,
+    "warp_auth_non_browser_401": false,
+    "session_duration": "24h"
+  },
+  "human_policies": {
+    "owner": {
+      "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+      "request": {
+        "name": "Owner email OTP US 24h",
+        "decision": "allow",
+        "include": [
+          {
+            "email": {
+              "email": "branden_farmer@live.com"
+            }
+          }
+        ],
+        "require": [
+          {
+            "login_method": {
+              "id": "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+            }
+          },
+          {
+            "geo": {
+              "country_code": "US"
+            }
+          }
+        ],
+        "exclude": [],
+        "session_duration": "24h"
+      }
+    },
+    "visitor": {
+      "id": "89a4306c-52ef-486c-bae0-faf0e13c2b81",
+      "request": {
+        "name": "Portfolio email OTP US 24h",
+        "decision": "allow",
+        "include": [
+          {
+            "login_method": {
+              "id": "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+            }
+          }
+        ],
+        "require": [
+          {
+            "geo": {
+              "country_code": "US"
+            }
+          }
+        ],
+        "exclude": [],
+        "session_duration": "24h"
+      }
+    }
+  },
+  "existing_apps_to_update": [
+    {
+      "id": "db977420-b11d-4c07-8340-42271473755c",
+      "preserve_aud": "8dca71ab16ffff43fbb436291bae7b9756a4495a5e631c39ebea4226320df564",
+      "family": "portfolio",
+      "environment": "production",
+      "role": "owner",
+      "request": {
+        "type": "self_hosted",
+        "name": "production",
+        "domain": "brandenfarmer.com/owner",
+        "self_hosted_domains": [
+          "brandenfarmer.com/owner",
+          "api.brandenfarmer.com/api/owner"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "brandenfarmer.com/owner"
+          },
+          {
+            "type": "public",
+            "uri": "api.brandenfarmer.com/api/owner"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": false,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": true,
+        "eager_redirect_cookie_setting": true,
+        "allow_authenticate_via_warp": false,
+        "path_cookie_attribute": true
+      }
+    },
+    {
+      "id": "7dcaf0bf-6fcd-44ca-ad80-d5fcd015d858",
+      "preserve_aud": "513b2edf78733f77d95e90c59c7fd3d43cd8c5b150874282db44c6d17244557f",
+      "family": "municipal",
+      "environment": "production",
+      "role": "private",
+      "request": {
+        "type": "self_hosted",
+        "name": "Municipal tracker production",
+        "domain": "capital.brandenfarmer.com",
+        "self_hosted_domains": [
+          "capital.brandenfarmer.com",
+          "capital-api.brandenfarmer.com",
+          "municipal-capital-project-tracker.pages.dev",
+          "*.municipal-capital-project-tracker.pages.dev"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "capital.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "capital-api.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "municipal-capital-project-tracker.pages.dev"
+          },
+          {
+            "type": "public",
+            "uri": "*.municipal-capital-project-tracker.pages.dev"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": false,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": false,
+        "eager_redirect_cookie_setting": true,
+        "allow_authenticate_via_warp": false
+      }
+    },
+    {
+      "id": "6b52727c-5d1a-46c3-8c96-248601006162",
+      "preserve_aud": "3c357e8babb46f9615d2dc564ef7e526cdf002d91ac51dad75e82b83a58fe223",
+      "family": "municipal",
+      "environment": "preview",
+      "role": "private",
+      "request": {
+        "type": "self_hosted",
+        "name": "Municipal tracker preview",
+        "domain": "capital-test.brandenfarmer.com",
+        "self_hosted_domains": [
+          "capital-test.brandenfarmer.com",
+          "capital-api-test.brandenfarmer.com",
+          "preview.municipal-capital-project-tracker.pages.dev"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "capital-test.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "capital-api-test.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "preview.municipal-capital-project-tracker.pages.dev"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": false,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": false,
+        "eager_redirect_cookie_setting": true,
+        "allow_authenticate_via_warp": false
+      }
+    },
+    {
+      "id": "243a269b-a9da-4adb-926d-6a783bd58a5e",
+      "preserve_aud": "0437e387d1f293f375b086ed18e6dcbb70448a03cbf9814ba8ed2196b097fab8",
+      "family": "jobs",
+      "environment": "production",
+      "role": "private",
+      "request": {
+        "type": "self_hosted",
+        "name": "Job intelligence production",
+        "domain": "jobs.brandenfarmer.com",
+        "self_hosted_domains": [
+          "jobs.brandenfarmer.com",
+          "jobs-api.brandenfarmer.com",
+          "job-search-intelligence.pages.dev",
+          "*.job-search-intelligence.pages.dev"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "jobs.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "jobs-api.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "job-search-intelligence.pages.dev"
+          },
+          {
+            "type": "public",
+            "uri": "*.job-search-intelligence.pages.dev"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": true,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          },
+          {
+            "id": "918c5c71-87e0-4743-98d9-5ef5c807c640",
+            "precedence": 2
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": false,
+        "eager_redirect_cookie_setting": true,
+        "cors_headers": {
+          "allow_credentials": true,
+          "allowed_headers": [
+            "Content-Type"
+          ],
+          "allowed_methods": [
+            "DELETE",
+            "OPTIONS",
+            "GET",
+            "POST",
+            "PATCH"
+          ],
+          "allowed_origins": [
+            "https://jobs.brandenfarmer.com"
+          ]
+        },
+        "allow_authenticate_via_warp": false
+      }
+    },
+    {
+      "id": "edb7d94d-dac3-4b2f-ae5d-6e2f06c78b90",
+      "preserve_aud": "e3bb7f883d8b3694227d6cd2296e5af91335b9ffe7836a7073fc2b5d7ce7c72a",
+      "family": "jobs",
+      "environment": "preview",
+      "role": "private",
+      "request": {
+        "type": "self_hosted",
+        "name": "Job intelligence preview",
+        "domain": "jobs-test.brandenfarmer.com",
+        "self_hosted_domains": [
+          "jobs-test.brandenfarmer.com",
+          "jobs-api-test.brandenfarmer.com",
+          "preview.job-search-intelligence.pages.dev"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "jobs-test.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "jobs-api-test.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "preview.job-search-intelligence.pages.dev"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": true,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": false,
+        "eager_redirect_cookie_setting": true,
+        "cors_headers": {
+          "allow_credentials": true,
+          "allowed_headers": [
+            "Content-Type"
+          ],
+          "allowed_methods": [
+            "OPTIONS",
+            "GET",
+            "POST",
+            "PATCH",
+            "DELETE"
+          ],
+          "allowed_origins": [
+            "https://jobs-test.brandenfarmer.com"
+          ]
+        },
+        "allow_authenticate_via_warp": false
+      }
+    },
+    {
+      "id": "447184cc-a644-491d-a763-c63ef65ce833",
+      "preserve_aud": "14fecc1ea27133e0e949f3ed09435cc162fd35f6e44881942148b97dde024f9b",
+      "family": "portfolio",
+      "environment": "preview",
+      "role": "owner",
+      "request": {
+        "type": "self_hosted",
+        "name": "preview",
+        "domain": "preview.brandenfarmer.com/owner",
+        "self_hosted_domains": [
+          "preview.brandenfarmer.com/owner",
+          "api-preview.brandenfarmer.com/api/owner"
+        ],
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "preview.brandenfarmer.com/owner"
+          },
+          {
+            "type": "public",
+            "uri": "api-preview.brandenfarmer.com/api/owner"
+          }
+        ],
+        "app_launcher_visible": true,
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "tags": [],
+        "auto_redirect_to_identity": true,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ],
+        "session_duration": "24h",
+        "enable_binding_cookie": false,
+        "http_only_cookie_attribute": true,
+        "options_preflight_bypass": true,
+        "eager_redirect_cookie_setting": true,
+        "allow_authenticate_via_warp": false,
+        "path_cookie_attribute": true
+      }
+    }
+  ],
+  "new_apps_to_create": [
+    {
+      "family": "portfolio",
+      "environment": "production",
+      "role": "visitor",
+      "request": {
+        "type": "self_hosted",
+        "name": "Portfolio email visitors production",
+        "domain": "brandenfarmer.com",
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "api.brandenfarmer.com"
+          }
+        ],
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "session_duration": "24h",
+        "allow_authenticate_via_warp": false,
+        "http_only_cookie_attribute": true,
+        "eager_redirect_cookie_setting": true,
+        "options_preflight_bypass": true,
+        "app_launcher_visible": false,
+        "policies": [
+          {
+            "id": "89a4306c-52ef-486c-bae0-faf0e13c2b81",
+            "precedence": 1
+          }
+        ]
+      }
+    },
+    {
+      "family": "portfolio",
+      "environment": "preview",
+      "role": "visitor",
+      "request": {
+        "type": "self_hosted",
+        "name": "Portfolio email visitors preview",
+        "domain": "preview.brandenfarmer.com",
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "preview.brandenfarmer.com"
+          },
+          {
+            "type": "public",
+            "uri": "api-preview.brandenfarmer.com"
+          }
+        ],
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "session_duration": "24h",
+        "allow_authenticate_via_warp": false,
+        "http_only_cookie_attribute": true,
+        "eager_redirect_cookie_setting": true,
+        "options_preflight_bypass": true,
+        "app_launcher_visible": false,
+        "policies": [
+          {
+            "id": "89a4306c-52ef-486c-bae0-faf0e13c2b81",
+            "precedence": 1
+          }
+        ]
+      }
+    },
+    {
+      "family": "portfolio",
+      "environment": "deployment",
+      "role": "owner",
+      "request": {
+        "type": "self_hosted",
+        "name": "Portfolio Pages owner OTP US",
+        "domain": "branden-farmer-portfolio.pages.dev",
+        "destinations": [
+          {
+            "type": "public",
+            "uri": "branden-farmer-portfolio.pages.dev"
+          },
+          {
+            "type": "public",
+            "uri": "*.branden-farmer-portfolio.pages.dev"
+          }
+        ],
+        "allowed_idps": [
+          "866c6dd8-12c1-47a5-9c95-dab5abfea0d7"
+        ],
+        "session_duration": "24h",
+        "allow_authenticate_via_warp": false,
+        "http_only_cookie_attribute": true,
+        "eager_redirect_cookie_setting": false,
+        "app_launcher_visible": false,
+        "policies": [
+          {
+            "id": "beae4181-813c-4c75-8b38-5e4d079de6d4",
+            "precedence": 1
+          }
+        ]
+      }
+    }
+  ],
+  "jobs_machine_policy_update": {
+    "id": "918c5c71-87e0-4743-98d9-5ef5c807c640",
+    "status": "PENDING schema acceptance/readback and US automation validation; blocks Jobs migration",
+    "request": {
+      "name": "Outlook automation service token",
+      "decision": "non_identity",
+      "include": [
+        {
+          "service_token": {
+            "token_id": "f50e39f8-f375-4cd8-b48b-841bbcea2255"
+          }
+        }
+      ],
+      "exclude": [],
+      "require": [
+        {
+          "geo": {
+            "country_code": "US"
+          }
+        }
+      ],
+      "connection_rules": {
+        "rdp": {}
+      },
+      "session_duration": "12h"
+    },
+    "worker_contract": {
+      "claim": "common_name",
+      "binding": "existing AUTOMATION_CLIENT_ID unchanged",
+      "subject": "",
+      "email_claim": "absent",
+      "token_type": "app"
+    }
+  },
+  "cal_transport": {
+    "status": "PENDING real US delivery; no foreign exception",
+    "policy_to_create": {
+      "name": "Portfolio signed Cal transport",
+      "decision": "bypass",
+      "include": [
+        {
+          "everyone": {}
+        }
+      ]
+    },
+    "destinations": [
+      "api.brandenfarmer.com/api/webhooks/cal",
+      "api-preview.brandenfarmer.com/api/webhooks/cal"
+    ],
+    "policy_reference": "Create reusable bypass policy, then record returned ID and review exact app request before binding; no fake ID is supplied."
+  },
+  "pages_inventory": [
+    {
+      "project": "branden-farmer-portfolio",
+      "family": "portfolio",
+      "root": "branden-farmer-portfolio.pages.dev",
+      "wildcard": "*.branden-farmer-portfolio.pages.dev",
+      "preview_alias": "preview.branden-farmer-portfolio.pages.dev",
+      "observed_preview_deployment": "https://8a5cefc0.branden-farmer-portfolio.pages.dev",
+      "branch": "preview",
+      "frontend_api_target_observed": false
+    },
+    {
+      "project": "job-search-intelligence",
+      "family": "jobs",
+      "root": "job-search-intelligence.pages.dev",
+      "wildcard": "*.job-search-intelligence.pages.dev",
+      "preview_alias": "preview.job-search-intelligence.pages.dev",
+      "observed_preview_deployment": "https://1ceadd05.job-search-intelligence.pages.dev",
+      "branch": "preview",
+      "frontend_api_target_observed": false
+    },
+    {
+      "project": "municipal-capital-project-tracker",
+      "family": "municipal",
+      "root": "municipal-capital-project-tracker.pages.dev",
+      "wildcard": "*.municipal-capital-project-tracker.pages.dev",
+      "preview_alias": "preview.municipal-capital-project-tracker.pages.dev",
+      "observed_preview_deployment": "https://96fdfa73.municipal-capital-project-tracker.pages.dev",
+      "branch": "preview",
+      "frontend_api_target_observed": false
+    }
+  ],
+  "worker_inventory": [
+    {
+      "hostname": "api-preview.brandenfarmer.com",
+      "worker": "branden-farmer-portfolio-api-preview",
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    {
+      "hostname": "jobs-api-test.brandenfarmer.com",
+      "worker": "job-search-intelligence-api-preview",
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    {
+      "hostname": "capital-api-test.brandenfarmer.com",
+      "worker": "municipal-capital-project-tracker-api-preview",
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    {
+      "hostname": "jobs-api.brandenfarmer.com",
+      "worker": "job-search-intelligence-api",
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    {
+      "hostname": "api.brandenfarmer.com",
+      "worker": "branden-farmer-portfolio-api",
+      "workers_dev": false,
+      "preview_urls": false
+    },
+    {
+      "hostname": "capital-api.brandenfarmer.com",
+      "worker": "municipal-capital-project-tracker-api",
+      "workers_dev": false,
+      "preview_urls": false
+    }
+  ],
+  "waf_stages": [
+    {
+      "family": "portfolio",
+      "environment": "preview",
+      "hosts": [
+        "preview.brandenfarmer.com",
+        "api-preview.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_portfolio_preview",
+        "description": "portfolio preview US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"preview.brandenfarmer.com\" \"api-preview.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    },
+    {
+      "family": "portfolio",
+      "environment": "production",
+      "hosts": [
+        "brandenfarmer.com",
+        "www.brandenfarmer.com",
+        "api.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_portfolio_production",
+        "description": "portfolio production US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"brandenfarmer.com\" \"www.brandenfarmer.com\" \"api.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    },
+    {
+      "family": "jobs",
+      "environment": "preview",
+      "hosts": [
+        "jobs-test.brandenfarmer.com",
+        "jobs-api-test.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_jobs_preview",
+        "description": "jobs preview US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"jobs-test.brandenfarmer.com\" \"jobs-api-test.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    },
+    {
+      "family": "jobs",
+      "environment": "production",
+      "hosts": [
+        "jobs.brandenfarmer.com",
+        "jobs-api.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_jobs_production",
+        "description": "jobs production US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"jobs.brandenfarmer.com\" \"jobs-api.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    },
+    {
+      "family": "municipal",
+      "environment": "preview",
+      "hosts": [
+        "capital-test.brandenfarmer.com",
+        "capital-api-test.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_municipal_preview",
+        "description": "municipal preview US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"capital-test.brandenfarmer.com\" \"capital-api-test.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    },
+    {
+      "family": "municipal",
+      "environment": "production",
+      "hosts": [
+        "capital.brandenfarmer.com",
+        "capital-api.brandenfarmer.com"
+      ],
+      "request": {
+        "ref": "otp_us_municipal_production",
+        "description": "municipal production US only",
+        "action": "block",
+        "enabled": false,
+        "expression": "(http.host in {\"capital.brandenfarmer.com\" \"capital-api.brandenfarmer.com\"} and ip.src.country ne \"US\")"
+      }
+    }
+  ],
+  "cutoff": {
+    "method": "POST",
+    "path_template": "/accounts/712adbcc6c4efdf86433da200b135398/access/apps/{app_id}/revoke_tokens",
+    "status": "NOT EXECUTED: successful fresh owner OTP/API pilot plus verified control-plane recovery required before per-app revoke; otherwise old sessions pending expiry and full activation blocked"
+  },
+  "canonical_www": "redirect-only, excluded from eager destinations; US WAF applies"
+}

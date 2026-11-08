@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { PageIntro } from "../components/PageIntro";
 import { TurnstileWidget } from "../components/TurnstileWidget";
 import { getAskStatus, submitAsk } from "../lib/api";
+import { ApiSignInRecovery } from "../components/ApiStatus";
 
 const stages = [
   { icon: BookOpen, title: "Approved sources", text: "Only the published résumé, About, and Work content is searched. Private messages and bookings are never used." },
@@ -61,6 +62,7 @@ export function AskPage() {
   const [resetKey, setResetKey] = useState(0);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [requestFailed, setRequestFailed] = useState(false);
   const [result, setResult] = useState<AskResponse | null>(readStoredResult);
   const [aiEnabled, setAiEnabled] = useState<boolean | null>(null);
   const [allowance, setAllowance] = useState<AskAllowance | null>(null);
@@ -82,6 +84,7 @@ export function AskPage() {
       if (signal?.aborted || version !== statusVersionRef.current) return;
       setAiEnabled(null);
       setAllowance(null);
+      setRequestFailed(true);
     });
   }, []);
 
@@ -123,6 +126,7 @@ export function AskPage() {
     // A status read started before this submission no longer describes its quota.
     statusVersionRef.current += 1;
     setError("");
+    setRequestFailed(false);
     let refreshStatus = true;
     try {
       const response = await submitAsk({ mode, text: trimmed, turnstileToken });
@@ -138,6 +142,7 @@ export function AskPage() {
       }
       requestAnimationFrame(() => resultRef.current?.focus());
     } catch (reason) {
+      setRequestFailed(true);
       setError(reason instanceof Error ? reason.message : "Ask Branden is unavailable. Browse the résumé and projects instead.");
     } finally {
       pendingRef.current = false;
@@ -257,6 +262,7 @@ export function AskPage() {
               {pending ? "Searching…" : "Ask Branden"}
             </button>
             <p className="form-status is-error" role="alert">{error}</p>
+            {requestFailed ? <p><ApiSignInRecovery /></p> : null}
           </form>
 
           {result ? (

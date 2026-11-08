@@ -32,7 +32,7 @@ export function SourcesPage() {
   }
   return <>
     <PageHeader title="Sources & privacy" description="Connect a simulated Gmail mailbox and tracker, review sync coverage and control the data this demo keeps." />
-    <Panel title="Connections" description="This demo simulates a read-only Gmail mailbox and a read-only tracker. No Google sign-in happens, no real mailbox is read, and each sync imports fixed fictional sample messages."
+    <Panel title="Connections" description="This demo simulates a read-only Gmail mailbox and a read-only tracker. No mailbox sign-in happens in the demo, no real mailbox is read, and each sync imports fixed fictional sample messages."
       actions={<>
         <Button variant="primary" disabled={!gmail.connected || gmail.paused} onClick={() => perform(runGmailSync())}>Run Gmail sync</Button>
         <Button disabled={!gmail.connected} onClick={() => perform(resumeGmail())}>Resume Gmail imports</Button>

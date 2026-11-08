@@ -15,13 +15,17 @@ import type {
 export const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8787";
 
 export async function getApiHealth(signal?: AbortSignal): Promise<HealthResponse> {
-  const response = await fetch(`${apiBaseUrl}/api/health`, { signal });
+  const response = await fetch(`${apiBaseUrl}/api/health`, { credentials: "include", signal });
 
   if (!response.ok) {
     throw new Error(`Health check failed with status ${response.status}`);
   }
 
-  return response.json() as Promise<HealthResponse>;
+  const body = await response.json().catch(() => null) as HealthResponse | null;
+  if (!body || body.status !== "ok" || body.service !== "portfolio-api" || typeof body.timestamp !== "string") {
+    throw new Error("The API session could not be verified. Sign in to the portfolio API, then reload.");
+  }
+  return body;
 }
 
 export class ApiRequestError extends Error {
@@ -49,6 +53,7 @@ export async function submitContact(contact: ContactRequest, signal?: AbortSigna
   const response = await fetch(`${apiBaseUrl}/api/contact`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(contact),
     signal,
   });

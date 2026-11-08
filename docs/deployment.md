@@ -105,14 +105,14 @@ The Cal.com event type ID, Access team domain, and Access audience tag are ident
 
 ### 6. Protect the owner tools with Cloudflare Access
 
-Follow the complete [owner Access setup guide](owner-access-setup.md). The current route is **Zero Trust → Access controls → Applications**. Create one application per environment, each containing both the page and API destinations, with the exact-email owner policy attached:
+Follow the complete [owner Access setup guide](owner-access-setup.md). The current route is **Zero Trust → Access controls → Applications**. Update the existing owner application in each environment in place, preserving its ID/AUD and both destinations, preparing OTP-only login with the new exact-owner+OTP+US policy and 24h human sessions. Do not create replacement apps or edit the old shared policy; preserve it and the restrictive original provider for guarded rollback. Actual binding follows the secure preview pilot, not this source preparation:
 
 | Environment | Owner page destination | Owner API destination |
 | --- | --- | --- |
 | Preview | `preview.brandenfarmer.com/owner` | `api-preview.brandenfarmer.com/api/owner` |
 | Production | `brandenfarmer.com/owner` | `api.brandenfarmer.com/api/owner` |
 
-Plain paths inherit protection to child paths. Check **Bypass OPTIONS requests to origin** and **Eager redirect cookie** in Advanced settings. The Worker validates the Origin on OPTIONS; actual owner requests require a valid Access JWT. Copy each application's AUD to its matching `ACCESS_AUD`, and the existing team domain without scheme or trailing slash to `ACCESS_TEAM_DOMAIN`.
+Plain paths inherit protection to child paths. Check **Bypass OPTIONS requests to origin** and **Eager redirect cookie** in Advanced settings. The Worker validates the Origin on OPTIONS; actual owner requests require a valid Access JWT. Verify each existing application's AUD still matches its `ACCESS_AUD` and preserve the existing team domain in `ACCESS_TEAM_DOMAIN`. Enable HttpOnly and path-scoped owner cookies; disable WARP authentication and use 24h global/application/human-policy sessions. Visitor protection is separate: finite bootstrap may still be public, while an active-gate release requires the full [visitor rollout](visitor-access-setup.md), including US-only visitor login, Pages aliases and WAF.
 
 ### 7. Connect Cal.com booking history
 
@@ -200,3 +200,7 @@ No one needs to run a production deploy command for routine releases. A failed q
 Cloudflare retains deployment history for both Pages and Workers. Before the first public release, verify that the team can identify the previous successful Pages deployment and Worker version in the Cloudflare dashboard.
 
 If a release must be reversed, use Cloudflare's rollback controls for the affected service, then revert the faulty commit through a reviewed pull request. The merge of that revert creates a new, fully validated production deployment and restores source control as the deployment source of truth.
+
+## Required visitor access rollout
+
+Follow [visitor access setup](visitor-access-setup.md) before activating email one-time PIN login with 24h human sessions and US-only access. Set GitHub environment `ACCESS_ROLLOUT_STATE` explicitly to `bootstrap` with `ACCESS_BOOTSTRAP_DEADLINE` no later than 2026-11-12T08:00:00Z for the initial supporting-code release, or `enforced` once Access is active. An unset/expired state fails verification. The workflow never follows login HTML as application health; enforced probes check only the pinned Access challenge. Authenticated health, contact/Ask and genuine signed Cal delivery remain separate manual release gates. Do not introduce service-token exceptions to visitor applications.

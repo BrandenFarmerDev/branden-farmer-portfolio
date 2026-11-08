@@ -1,6 +1,8 @@
 name = "branden-farmer-portfolio-api"
 main = "src/index.ts"
 compatibility_date = "2026-09-27"
+workers_dev = false
+preview_urls = false
 
 # Daily contact-delivery retries and retention cleanup.
 [triggers]
@@ -43,6 +45,8 @@ period = 60
 # Isolated preview: separate D1, secrets, rate-limit namespaces, and a sandbox email recipient.
 [env.preview]
 name = "branden-farmer-portfolio-api-preview"
+workers_dev = false
+preview_urls = false
 
 [env.preview.secrets]
 required = ["ASK_SIGNING_SECRET", "CAL_WEBHOOK_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
@@ -90,6 +94,8 @@ period = 60
 
 [env.production]
 name = "branden-farmer-portfolio-api"
+workers_dev = false
+preview_urls = false
 
 [env.production.secrets]
 required = ["ASK_SIGNING_SECRET", "CAL_WEBHOOK_SECRET", "RESEND_API_KEY", "TURNSTILE_SECRET_KEY"]
