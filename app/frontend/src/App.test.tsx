@@ -119,7 +119,11 @@ describe("portfolio routes", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "start" });
     const highlighted = document.querySelectorAll("[data-hash-active]");
     expect(highlighted).toHaveLength(ROLE_HIGHLIGHT_CHUNK);
-    expect(highlighted[0]).toHaveTextContent(resumeContent.experience[0].roles[0].highlights[ROLE_HIGHLIGHT_CHUNK]);
+    const sncRole = resumeContent.experience
+      .find((employer) => employer.name === "Sierra Nevada Corporation")?.roles
+      .find((role) => role.title === "Business Intelligence Developer III");
+    expect(sncRole).toBeDefined();
+    expect(highlighted[0]).toHaveTextContent(sncRole!.highlights[ROLE_HIGHLIGHT_CHUNK]);
   });
 
   it("renders every anchor the Ask evidence corpus links to", async () => {
