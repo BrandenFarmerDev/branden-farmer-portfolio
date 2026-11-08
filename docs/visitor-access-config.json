@@ -16,11 +16,6 @@
     "is_ui_read_only": false,
     "login_design": {},
     "name": "cold-union-464d.cloudflareaccess.com",
-    "service_token_inactivity": {
-      "enabled": false,
-      "inactivity_threshold_days": null,
-      "action": null
-    },
     "strict_service_token_auth": false,
     "warp_auth_non_browser_401": false,
     "session_duration": "24h"

@@ -18,19 +18,47 @@ const existingApps = {
 };
 const us = { geo: { country_code: "US" } };
 const servicePolicyId = "918c5c71-87e0-4743-98d9-5ef5c807c640";
-const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/;
+const preparedIds = {
+  otp: "866c6dd8-12c1-47a5-9c95-dab5abfea0d7",
+  owner: "beae4181-813c-4c75-8b38-5e4d079de6d4",
+  visitor: "89a4306c-52ef-486c-bae0-faf0e13c2b81",
+};
+// Reviewed routing is independent of the candidate being checked. Array order is retained.
+const existingDestinations = {
+  "243a269b-a9da-4adb-926d-6a783bd58a5e": ["jobs.brandenfarmer.com", "jobs-api.brandenfarmer.com", "job-search-intelligence.pages.dev", "*.job-search-intelligence.pages.dev"],
+  "edb7d94d-dac3-4b2f-ae5d-6e2f06c78b90": ["jobs-test.brandenfarmer.com", "jobs-api-test.brandenfarmer.com", "preview.job-search-intelligence.pages.dev"],
+  "6b52727c-5d1a-46c3-8c96-248601006162": ["capital-test.brandenfarmer.com", "capital-api-test.brandenfarmer.com", "preview.municipal-capital-project-tracker.pages.dev"],
+  "7dcaf0bf-6fcd-44ca-ad80-d5fcd015d858": ["capital.brandenfarmer.com", "capital-api.brandenfarmer.com", "municipal-capital-project-tracker.pages.dev", "*.municipal-capital-project-tracker.pages.dev"],
+  "db977420-b11d-4c07-8340-42271473755c": ["brandenfarmer.com/owner", "api.brandenfarmer.com/api/owner"],
+  "447184cc-a644-491d-a763-c63ef65ce833": ["preview.brandenfarmer.com/owner", "api-preview.brandenfarmer.com/api/owner"],
+};
+const newDestinations = {
+  "production/visitor": ["brandenfarmer.com", "api.brandenfarmer.com"],
+  "preview/visitor": ["preview.brandenfarmer.com", "api-preview.brandenfarmer.com"],
+  "deployment/owner": ["branden-farmer-portfolio.pages.dev", "*.branden-farmer-portfolio.pages.dev"],
+};
+const workerRouting = {
+  "api-preview.brandenfarmer.com": "branden-farmer-portfolio-api-preview",
+  "api.brandenfarmer.com": "branden-farmer-portfolio-api",
+  "jobs-api-test.brandenfarmer.com": "job-search-intelligence-api-preview",
+  "jobs-api.brandenfarmer.com": "job-search-intelligence-api",
+  "capital-api-test.brandenfarmer.com": "municipal-capital-project-tracker-api-preview",
+  "capital-api.brandenfarmer.com": "municipal-capital-project-tracker-api",
+};
 
 export function validateAccessConfig(config) {
-  const otp = config.otp_provider.id;
-  assert.match(otp, uuid);
+  const otp = preparedIds.otp;
+  assert.equal(config.otp_provider.id, otp);
   assert.equal(config.otp_provider.type, "onetimepin");
-  assert.notEqual(otp, config.rollback_provider_id);
+  assert.equal(config.rollback_provider_id, "a4b44d0e-654a-44f8-9caa-f6cadc52520f");
+  assert.equal(config.rollback_owner_policy_id, "2f08f97a-f619-47d4-abd1-dbe6ca15a943");
   assert.equal(config.organization_request.session_duration, "24h");
   assert.equal(config.organization_request.allow_authenticate_via_warp, false);
+  assert.ok(!Object.hasOwn(config.organization_request, "service_token_inactivity"), "omit the optional unconfigured inactivity block; do not invent token enforcement settings");
   const method = { login_method: { id: otp } };
   for (const [role, policy] of Object.entries(config.human_policies)) {
     assert.ok(["owner", "visitor"].includes(role));
-    assert.match(policy.id, uuid);
+    assert.equal(policy.id, preparedIds[role]);
     assert.equal(policy.request.decision, "allow");
     assert.equal(policy.request.session_duration, "24h");
     assert.deepEqual(policy.request.exclude, []);
@@ -40,6 +68,7 @@ export function validateAccessConfig(config) {
   assert.deepEqual(Object.keys(config.human_policies).sort(), ["owner", "visitor"]);
   assert.notEqual(config.human_policies.owner.id, config.human_policies.visitor.id);
   assert.deepEqual(config.existing_apps_to_update.map(a => a.id).sort(), Object.keys(existingApps).sort());
+  assert.deepEqual(config.new_apps_to_create.map(a => `${a.environment}/${a.role}`).sort(), Object.keys(newDestinations).sort());
   const apps = [...config.existing_apps_to_update, ...config.new_apps_to_create];
   for (const app of apps) {
     const request = app.request;
@@ -52,12 +81,15 @@ export function validateAccessConfig(config) {
       assert.equal(app.role, app.environment === "deployment" ? "owner" : "visitor");
     }
     assert.equal(request.type, "self_hosted");
-    assert.ok(request.domain);
+    const destinations = app.id ? existingDestinations[app.id] : newDestinations[`${app.environment}/${app.role}`];
+    assert.equal(request.domain, destinations[0]);
+    assert.deepEqual(request.destinations, destinations.map(uri => ({ type: "public", uri })));
+    if (request.self_hosted_domains) assert.deepEqual(request.self_hosted_domains, destinations);
     assert.deepEqual(request.allowed_idps, [otp]);
     assert.equal(request.session_duration, "24h");
     assert.equal(request.allow_authenticate_via_warp, false);
     assert.equal(request.http_only_cookie_attribute, true);
-    const humanPolicy = config.human_policies[app.role === "visitor" ? "visitor" : "owner"].id;
+    const humanPolicy = preparedIds[app.role === "visitor" ? "visitor" : "owner"];
     const references = [{ id: humanPolicy, precedence: 1 }];
     if (app.id === "243a269b-a9da-4adb-926d-6a783bd58a5e") references.push({ id: servicePolicyId, precedence: 2 });
     assert.deepEqual(request.policies, references, "only Jobs production may retain the existing machine policy");
@@ -69,27 +101,17 @@ export function validateAccessConfig(config) {
   assert.deepEqual(machine.request.require, [us]);
   assert.equal(machine.request.session_duration, "12h", "do not extend the existing machine authority to the new human duration");
   assert.deepEqual(machine.worker_contract, { claim: "common_name", binding: "existing AUTOMATION_CLIENT_ID unchanged", subject: "", email_claim: "absent", token_type: "app" });
-  const destinations = apps.flatMap(a => a.request.destinations.map(d => d.uri));
-  const scope = Object.values(customHosts).flatMap(envs => Object.values(envs).flat());
-  const allowedDestinations = new Set([
-    ...scope.filter(h => h !== "www.brandenfarmer.com"),
-    "brandenfarmer.com/owner", "api.brandenfarmer.com/api/owner",
-    "preview.brandenfarmer.com/owner", "api-preview.brandenfarmer.com/api/owner",
-    ...["branden-farmer-portfolio", "job-search-intelligence", "municipal-capital-project-tracker"].flatMap(project => [`${project}.pages.dev`, `*.${project}.pages.dev`, `preview.${project}.pages.dev`]),
-  ]);
-  for (const destination of destinations) assert.ok(allowedDestinations.has(destination), `Unreviewed destination ${destination}`);
-  for (const host of scope.filter(h => h !== "www.brandenfarmer.com")) assert.ok(destinations.includes(host), `Missing ${host}`);
-  assert.ok(!destinations.includes("www.brandenfarmer.com"), "www must stay redirect-only");
   assert.deepEqual(config.pages_inventory.map(p => p.project).sort(), ["branden-farmer-portfolio", "job-search-intelligence", "municipal-capital-project-tracker"].sort());
   for (const page of config.pages_inventory) {
     assert.equal(page.root, `${page.project}.pages.dev`);
     assert.equal(page.wildcard, `*.${page.project}.pages.dev`);
     assert.equal(page.preview_alias, `preview.${page.project}.pages.dev`);
-    assert.ok(destinations.includes(page.root) && destinations.includes(page.wildcard), "Pages defaults and every deployment must be protected");
-    assert.ok(destinations.includes(page.preview_alias) || page.family === "portfolio", "private preview alias must have an explicit app destination");
   }
-  assert.deepEqual(config.worker_inventory.map(w => w.hostname).sort(), scope.filter(h => h.startsWith("api") || h.includes("-api")).sort());
-  for (const worker of config.worker_inventory) assert.ok(worker.workers_dev === false && worker.preview_urls === false);
+  assert.deepEqual(config.worker_inventory.map(w => w.hostname).sort(), Object.keys(workerRouting).sort());
+  for (const worker of config.worker_inventory) {
+    assert.equal(worker.worker, workerRouting[worker.hostname]);
+    assert.ok(worker.workers_dev === false && worker.preview_urls === false);
+  }
   assert.deepEqual(config.waf_stages.map(s => `${s.family}/${s.environment}`).sort(), Object.entries(customHosts).flatMap(([family, envs]) => Object.keys(envs).map(env => `${family}/${env}`)).sort());
   for (const stage of config.waf_stages) {
     assert.deepEqual([...stage.hosts].sort(), [...customHosts[stage.family][stage.environment]].sort());

@@ -44,3 +44,36 @@ test("the scanner rejects credentials in settings and built artifacts while allo
     await rm(directory, { recursive: true, force: true });
   }
 });
+
+test("the reviewed resource UUID exception is restricted to its exact value, rule and two configuration paths", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "portfolio-resource-id-test-"));
+  const paths = ["scripts/access-config.mjs", "docs/visitor-access-config.json"];
+  const reviewedResourceId = ["f50e39f8", "f375", "4cd8", "b48b", "841bbcea2255"].join("-");
+  const syntheticSecret = ["qM7vD4rX9p", "L2nB6sT0wK", "5cF8hJ1zA3", "eG6uV9yN2d"].join("");
+  const reportPath = join(directory, "findings.json");
+  try {
+    for (const path of paths) {
+      await mkdir(join(directory, path.split("/")[0]), { recursive: true });
+      await writeFile(join(directory, path), `const service_token = { token_id: "${reviewedResourceId}" };\nconst api_key = "${syntheticSecret}";\n`);
+    }
+    await writeFile(join(directory, "docs/unreviewed.json"), `{"token_id":"${reviewedResourceId}"}\n`);
+    const result = spawnSync(process.env.GITLEAKS_BINARY || "gitleaks", [
+      "dir", "--config", ".gitleaks.toml", "--redact", "--no-banner", "--no-color",
+      "--report-format", "json", "--report-path", reportPath, directory,
+    ], { encoding: "utf8" });
+    assert.ifError(result.error);
+    assert.equal(result.status, 1, "actual credential patterns must still fail in the excepted paths");
+    const findings = JSON.parse(await readFile(reportPath, "utf8"));
+    assert.equal(findings.length, 3);
+    for (const path of paths) {
+      const credentials = findings.filter(f => f.RuleID === "generic-api-key" && f.File.endsWith(path));
+      assert.equal(credentials.length, 1, `only the reviewed resource identifier may be omitted in ${path}`);
+      assert.equal(credentials[0].StartLine, 2, "the API-key fixture must be detected, not the reviewed first-line resource UUID");
+    }
+    assert.equal(findings.filter(f => f.RuleID === "generic-api-key" && f.File.endsWith("docs/unreviewed.json")).length, 1,
+      "the same UUID is not exempt in an unreviewed path");
+    assert.doesNotMatch(`${result.stdout}\n${result.stderr}`, new RegExp(syntheticSecret));
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

@@ -7,6 +7,37 @@ const candidate = () => JSON.parse(readFileSync("docs/visitor-access-config.json
 test("prepared configuration preserves owner privacy, OTP, sessions, machine authority and all host boundaries", () => {
   assert.doesNotThrow(() => validateAccessConfig(candidate()));
 });
+test("rejects the GET-only null inactivity shape instead of inventing enforcement defaults", () => {
+  const config = candidate();
+  config.organization_request.service_token_inactivity = { enabled: false, inactivity_threshold_days: null, action: null };
+  assert.throws(() => validateAccessConfig(config), /optional unconfigured inactivity/);
+});
+for (const [name, mutate] of [
+  ["a private deployment wildcard moved to visitor authority", c => {
+    const owner = c.new_apps_to_create.find(a => a.role === "owner");
+    const visitor = c.new_apps_to_create.find(a => a.role === "visitor");
+    visitor.request.destinations.push(owner.request.destinations.pop());
+  }],
+  ["a missing production portfolio owner API destination", c => {
+    c.existing_apps_to_update.find(a => a.id === "db977420-b11d-4c07-8340-42271473755c").request.destinations.pop();
+  }],
+  ["a legacy owner policy substituted consistently across the candidate", c => {
+    const prepared = c.human_policies.owner.id;
+    c.human_policies.owner.id = c.rollback_owner_policy_id;
+    for (const app of [...c.existing_apps_to_update, ...c.new_apps_to_create]) {
+      for (const reference of app.request.policies) if (reference.id === prepared) reference.id = c.rollback_owner_policy_id;
+    }
+  }],
+  ["a preview API hostname routed to the production Worker", c => {
+    c.worker_inventory.find(w => w.hostname === "jobs-api-test.brandenfarmer.com").worker = "job-search-intelligence-api";
+  }],
+]) {
+  test(`rejects ${name}`, () => {
+    const config = candidate();
+    mutate(config);
+    assert.throws(() => validateAccessConfig(config));
+  });
+}
 test("rejects human policy broadening, missing OTP/US, session and WARP bypass changes", () => {
   for (const mutate of [
     c => { c.human_policies.owner.request.include = [{ everyone: {} }]; },
