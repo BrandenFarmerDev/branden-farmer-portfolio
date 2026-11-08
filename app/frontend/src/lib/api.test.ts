@@ -93,6 +93,7 @@ describe("API client", () => {
     await expect(submitContact(contact)).rejects.toMatchObject({
       status: 502,
       details: { error: "invalid_response" },
+      message: expect.stringContaining("outcome is unconfirmed"),
     });
   });
 
@@ -121,5 +122,164 @@ describe("API client", () => {
       method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "replied" }),
     }));
     await expect(ownerApi.settings()).rejects.toMatchObject({ status: 403 });
+  });
+});
+
+
+describe("admission and connection recovery", () => {
+  beforeEach(() => { vi.mocked(fetch).mockReset(); });
+
+  it.each(["json", "html"])("shows manual retry for %s 429 without replay or raw HTML", async (kind) => {
+    vi.mocked(fetch).mockResolvedValue(kind === "json" ? Response.json({ error: "rate_limited", message: "private-provider-text" }, { status: 429 }) : new Response("<html>private-provider-text</html>", { status: 429 }));
+    await expect(submitContact(contact)).rejects.toMatchObject({ status: 429, message: "Too many requests. Wait a minute before trying again." });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("handles admission outages and Ask admission denial while preserving quota evidence", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ error: "rate_limit_unavailable" }, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ error: "rate_limited" }, { status: 429 }));
+    await expect(ownerApi.deleteContact("id")).rejects.toMatchObject({ status: 503, message: expect.stringContaining("Wait a minute") });
+    await expect(submitAsk({ mode: "question", text: "Question", turnstileToken: "token" })).rejects.toMatchObject({ status: 429 });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("distinguishes opaque read and write failures without replaying actions", async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+    await expect(ownerApi.contacts()).rejects.toThrow("Check your connection");
+    await expect(ownerApi.deleteBooking("id")).rejects.toThrow("outcome is unconfirmed");
+    await expect(submitContact(contact)).rejects.toThrow("Check the current app state");
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(["read", "write"])("preserves %s cancellation and the caller signal with exactly one fetch", async (kind) => {
+    const controller = new AbortController();
+    const error = new DOMException("Aborted", "AbortError");
+    vi.mocked(fetch).mockImplementationOnce(async (_url, init) => { expect(init?.signal).toBe(controller.signal); controller.abort(error); throw error; });
+    await expect(kind === "read" ? getAskStatus(controller.signal) : submitContact(contact, controller.signal)).rejects.toBe(error);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+
+describe("response body interruption recovery", () => {
+  beforeEach(() => { vi.mocked(fetch).mockReset(); });
+
+  function interruptedResponse(status: number, reason: unknown, interrupt?: () => void): Response {
+    return new Response(new ReadableStream({
+      pull(controller) {
+        interrupt?.();
+        controller.error(reason);
+      },
+    }, { highWaterMark: 0 }), { status, headers: { "Content-Type": "application/json" } });
+  }
+
+  for (const status of [200, 429, 503]) {
+    it.each(["AbortError", "TimeoutError"])(`preserves body-phase %s and caller reason for read/write HTTP ${status}`, async (name) => {
+      for (const read of [true, false]) {
+        const controller = new AbortController();
+        const reason = new DOMException("caller interruption", name);
+        const response = interruptedResponse(status, new TypeError("stream interrupted"), () => controller.abort(reason));
+        vi.mocked(fetch).mockResolvedValueOnce(response);
+        await expect(read ? getApiHealth(controller.signal) : submitContact(contact, controller.signal)).rejects.toBe(reason);
+        expect(response.bodyUsed).toBe(true);
+      }
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+  }
+
+  it.each(["AbortError", "TimeoutError"])("preserves body-phase %s without an explicit signal", async (name) => {
+    const reason = new DOMException("stream interrupted", name);
+    vi.mocked(fetch).mockResolvedValueOnce(interruptedResponse(503, reason));
+    await expect(ownerApi.setContactStatus("id", "replied")).rejects.toBe(reason);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports uncertain successful mutation outcomes on stream loss instead of resolving or replaying", async () => {
+    for (const action of [() => submitContact(contact), () => ownerApi.setContactStatus("id", "replied"),
+      () => submitAsk({ mode: "question", text: "Question", turnstileToken: "token" })]) {
+      vi.mocked(fetch).mockResolvedValueOnce(interruptedResponse(200, new TypeError("connection lost")));
+      await expect(action()).rejects.toMatchObject({ status: 0, message: expect.stringContaining("outcome is unconfirmed") });
+    }
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it.each(["not-json", "null", "false", "[]", ""])("rejects unreadable successful owner mutations: %j", async (body) => {
+    vi.mocked(fetch).mockResolvedValueOnce(new Response(body, { status: 200 }));
+    await expect(ownerApi.setContactStatus("id", "replied")).rejects.toMatchObject({
+      status: 502, details: { error: "invalid_response" }, message: expect.stringContaining("Check the current app state"),
+    });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports uncertainty when a completed successful Ask body cannot confirm the result", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json({ unexpected: true }));
+    await expect(submitAsk({ mode: "question", text: "Question", turnstileToken: "token" })).rejects.toThrow("outcome is unconfirmed");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses connectivity guidance for interrupted reads and distinguishes completed HTML throttling", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(interruptedResponse(200, new TypeError("connection lost")))
+      .mockResolvedValueOnce(new Response("<html>throttled</html>", { status: 429 }))
+      .mockResolvedValueOnce(interruptedResponse(429, new TypeError("connection lost")));
+    await expect(getAskStatus()).rejects.toThrow("Check your connection");
+    await expect(submitContact(contact)).rejects.toMatchObject({ status: 429, message: expect.stringContaining("Wait a minute") });
+    await expect(submitContact(contact)).rejects.toMatchObject({ status: 0, message: expect.stringContaining("outcome is unconfirmed") });
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("decodes admission outages and Ask quota evidence exactly once", async () => {
+    const outage = Response.json({ error: "rate_limit_unavailable" }, { status: 503 });
+    const evidenceOnly = { status: "evidence_only", message: "Used up.", evidence: [], remaining: 0 };
+    const quota = Response.json(evidenceOnly, { status: 429 });
+    const outageRead = vi.spyOn(outage, "text");
+    const quotaRead = vi.spyOn(quota, "text");
+    const clone = vi.spyOn(outage, "clone");
+    vi.mocked(fetch).mockResolvedValueOnce(outage).mockResolvedValueOnce(quota);
+    await expect(submitContact(contact)).rejects.toMatchObject({ status: 503, details: { error: "rate_limit_unavailable" } });
+    await expect(submitAsk({ mode: "question", text: "Question", turnstileToken: "token" })).resolves.toEqual(evidenceOnly);
+    expect(outageRead).toHaveBeenCalledTimes(1); expect(quotaRead).toHaveBeenCalledTimes(1);
+    expect(clone).not.toHaveBeenCalled(); expect(fetch).toHaveBeenCalledTimes(2);
+  });
+});
+
+
+describe("owner mutation acknowledgments", () => {
+  beforeEach(() => { vi.mocked(fetch).mockReset(); });
+
+  const writes = [
+    ["contact status", () => ownerApi.setContactStatus("id", "replied")],
+    ["contact delete", () => ownerApi.deleteContact("id")],
+    ["booking add", () => ownerApi.addBooking({ name: "Visitor", email: "visitor@example.com", startAt: "2026-11-08T10:00:00Z", endAt: "2026-11-08T11:00:00Z" })],
+    ["booking delete", () => ownerApi.deleteBooking("id")],
+    ["AI setting", () => ownerApi.setAiEnabled(false)],
+  ] as const;
+
+  for (const [name, action] of writes) {
+    it.each([{}, { ok: false }, { ok: "true" }, { ok: 1 }])(`rejects missing, negative or invalid ${name} acknowledgment: %j`, async (body) => {
+      vi.mocked(fetch).mockResolvedValueOnce(Response.json(body));
+      await expect(action()).rejects.toMatchObject({ status: 502, details: { error: "invalid_response" },
+        message: expect.stringContaining("Check the current app state before repeating") });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+
+    it(`accepts a positive ${name} acknowledgment with one fetch`, async () => {
+      vi.mocked(fetch).mockResolvedValueOnce(Response.json({ ok: true, bookingUid: "booking", aiEnabled: false }));
+      await expect(action()).resolves.toMatchObject({ ok: true });
+      expect(fetch).toHaveBeenCalledTimes(1);
+    });
+  }
+
+  it.each([true, false])("preserves a valid retry-contact business outcome ok=%s", async (ok) => {
+    const body = { ok, message: ok ? "Delivery retried." : "Delivery failed and will be retried." };
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(body));
+    await expect(ownerApi.retryContact("id")).resolves.toEqual(body);
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([{}, { ok: "true", message: "Wrong type" }, { ok: false }, { ok: true, message: null }])("rejects malformed retry-contact outcomes: %j", async (body) => {
+    vi.mocked(fetch).mockResolvedValueOnce(Response.json(body));
+    await expect(ownerApi.retryContact("id")).rejects.toMatchObject({ status: 502,
+      message: expect.stringContaining("outcome is unconfirmed") });
+    expect(fetch).toHaveBeenCalledTimes(1);
   });
 });

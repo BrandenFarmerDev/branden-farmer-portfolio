@@ -76,8 +76,8 @@ describe("OwnerPage", () => {
     await waitFor(() => expect(api.contacts).toHaveBeenLastCalledWith("acme"));
   });
 
-  it("offers sign-in when Access blocks the API and reports failed actions", async () => {
-    api.contacts.mockRejectedValue(new TypeError("Failed to fetch"));
+  it.each([new TypeError("Failed to fetch"), new ApiRequestError(0, { error: "connection_unavailable", message: "Check your connection." })])("offers sign-in when Access blocks the API: %s", async (error) => {
+    api.contacts.mockRejectedValue(error);
     render(<OwnerPage />);
     expect(await screen.findByRole("link", { name: "Sign in to the owner API" })).toHaveAttribute(
       "href", "http://localhost:8787/api/owner/settings");

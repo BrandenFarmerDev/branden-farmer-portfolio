@@ -3,6 +3,7 @@ import { calWebhookRoute } from "./routes/cal-webhook";
 import { contactRoute } from "./routes/contact";
 import { healthRoute } from "./routes/health";
 import { ownerRoute } from "./routes/owner";
+import { protectRequest } from "./services/request-protection";
 import { runMaintenance } from "./services/maintenance";
 import type { Env } from "./types";
 
@@ -21,6 +22,7 @@ function addResponseHeaders(response: Response, request: Request, env: Env, requ
     headers.set("Access-Control-Allow-Credentials", "true");
     headers.set("Vary", "Origin");
     headers.set("Access-Control-Allow-Headers", "Content-Type");
+    headers.set("Access-Control-Expose-Headers", "Retry-After");
     headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   }
 
@@ -30,7 +32,9 @@ function addResponseHeaders(response: Response, request: Request, env: Env, requ
   headers.set("Cache-Control", "no-store");
   headers.set("X-Request-ID", requestId);
 
-  return new Response(response.body, {
+  if (new URL(request.url).pathname.startsWith("/api/owner/")) headers.set("X-Robots-Tag", "noindex");
+
+  return new Response(request.method === "HEAD" ? null : response.body, {
     status: response.status,
     statusText: response.statusText,
     headers,
@@ -52,6 +56,9 @@ export default {
   async fetch(request, env): Promise<Response> {
     const startedAt = Date.now();
     const requestId = crypto.randomUUID();
+    const admission = await protectRequest(request, env);
+    if (admission) return addResponseHeaders(admission, request, env, requestId);
+
     const { pathname } = new URL(request.url);
 
     if (request.method === "OPTIONS") {
@@ -59,7 +66,7 @@ export default {
         ? new Response(null, { status: 204 })
         : originForbidden();
       const finalResponse = addResponseHeaders(response, request, env, requestId);
-      console.info(JSON.stringify({ event: "request_complete", requestId, method: request.method, path: pathname, status: finalResponse.status, durationMs: Date.now() - startedAt }));
+      console.info(JSON.stringify({ event: "request_complete", requestId, status: finalResponse.status, durationMs: Date.now() - startedAt }));
       return finalResponse;
     }
 
@@ -87,7 +94,7 @@ export default {
         );
       }
     } catch {
-      console.error(JSON.stringify({ event: "request_error", requestId, method: request.method, path: pathname }));
+      console.error(JSON.stringify({ event: "request_error", requestId }));
       response = Response.json(
         { error: "internal_error", message: "The service could not complete the request." },
         { status: 500 },
@@ -95,7 +102,7 @@ export default {
     }
 
     const finalResponse = addResponseHeaders(response, request, env, requestId);
-    console.info(JSON.stringify({ event: "request_complete", requestId, method: request.method, path: pathname, status: finalResponse.status, durationMs: Date.now() - startedAt }));
+    console.info(JSON.stringify({ event: "request_complete", requestId, status: finalResponse.status, durationMs: Date.now() - startedAt }));
     return finalResponse;
   },
   scheduled(_event, env, ctx): void {

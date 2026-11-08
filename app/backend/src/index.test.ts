@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import worker from "./index";
+import workerImplementation from "./index";
+
+// Existing route regressions exercise admitted requests; dedicated tests cover guard failures.
+const worker = { ...workerImplementation, fetch: (request: Parameters<typeof workerImplementation.fetch>[0], env: Env) =>
+  workerImplementation.fetch(request, { API_RATE_LIMITER: { limit: async () => ({ success: true }) }, ...env }) };
 import { hmacHex } from "./services/http";
 import type { Env } from "./types";
 

@@ -57,7 +57,7 @@ jobs:
         uses: github/codeql-action/setup-codeql@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
 
       - name: Test source scan and Access probe failure paths
-        run: npm run test:source-scan && npm run test:access
+        run: npm run test:source-scan && npm run test:access && npm run test:api-rate-config
 
       - name: Scan maintained source with security-extended queries
         env:
