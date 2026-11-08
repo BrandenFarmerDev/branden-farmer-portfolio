@@ -1,4 +1,4 @@
-export interface Env {
+export interface Env extends Partial<Pick<PortfolioBindings, "API_RATE_LIMITER">> {
   ALLOWED_ORIGIN?: string;
   CONTACT_FROM_EMAIL?: string;
   CONTACT_TO_EMAIL?: string;

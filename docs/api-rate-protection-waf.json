@@ -1,0 +1,19 @@
+{
+  "zone_id": "5eb81d7cb45f570b20e2e301f1003897",
+  "phase": "http_ratelimit",
+  "rule": {
+    "description": "API request burst protection",
+    "expression": "(http.request.uri.path eq \"/api\" or starts_with(http.request.uri.path, \"/api/\"))",
+    "action": "block",
+    "enabled": false,
+    "ratelimit": {
+      "characteristics": [
+        "cf.colo.id",
+        "ip.src"
+      ],
+      "period": 10,
+      "requests_per_period": 120,
+      "mitigation_timeout": 10
+    }
+  }
+}

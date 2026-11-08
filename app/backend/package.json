@@ -7,9 +7,11 @@
     "dev": "wrangler dev --port 8787",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "typecheck": "tsc --project tsconfig.json",
+    "typecheck": "npm run cf:types:check && tsc --project tsconfig.json",
     "build": "wrangler deploy --dry-run --env=\"\" --outdir dist",
-    "build:production": "wrangler deploy --dry-run --env production --outdir dist/production"
+    "build:production": "wrangler deploy --dry-run --env production --outdir dist/production",
+    "cf:types": "wrangler types src/worker-bindings.d.ts --env-interface PortfolioBindings --include-runtime false --env=\"\"",
+    "cf:types:check": "wrangler types src/worker-bindings.d.ts --env-interface PortfolioBindings --include-runtime false --env=\"\" --check"
   },
   "dependencies": {
     "@portfolio/shared": "*"

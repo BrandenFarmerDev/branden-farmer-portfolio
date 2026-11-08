@@ -2,7 +2,11 @@
   "threshold": 2.99,
   "minLines": 8,
   "minTokens": 50,
-  "formats": ["typescript", "tsx", "css"],
+  "formats": [
+    "typescript",
+    "tsx",
+    "css"
+  ],
   "ignore": [
     "**/.wrangler/**",
     "**/dist/**",
@@ -10,8 +14,12 @@
     "**/node_modules/**",
     "**/*.test.ts",
     "**/*.test.tsx",
-    "**/vite-env.d.ts"
+    "**/vite-env.d.ts",
+    "**/worker-bindings.d.ts"
   ],
-  "reporters": ["console", "json"],
+  "reporters": [
+    "console",
+    "json"
+  ],
   "output": "reports/jscpd"
 }

@@ -23,11 +23,12 @@
     "test:security-scan": "node --test scripts/security-scan.test.mjs",
     "secrets:source": "gitleaks dir --config .gitleaks.toml --redact --no-banner --no-color .",
     "secrets:build": "gitleaks dir --config .gitleaks.toml --redact --no-banner --no-color app/frontend/dist",
-    "quality": "npm run lint && npm run test:hooks && npm run test:security-scan && npm run test:source-scan && npm run test:access && npm run source:scan && npm run secrets:source && npm run test:coverage && npm run duplication && npm run typecheck && npm run build && npm run test:headers && npm run secrets:build && npm run audit",
+    "quality": "npm run lint && npm run test:hooks && npm run test:security-scan && npm run test:source-scan && npm run test:access && npm run test:api-rate-config && npm run source:scan && npm run secrets:source && npm run test:coverage && npm run duplication && npm run typecheck && npm run build && npm run test:headers && npm run secrets:build && npm run audit",
     "test:source-scan": "node --test scripts/source-scan.test.mjs",
     "source:scan": "node scripts/source-scan.mjs",
     "test:access": "node --test scripts/access-probe.test.mjs scripts/access-config.test.mjs && node scripts/access-config.mjs",
-    "test:headers": "node --test scripts/protected-headers.test.mjs"
+    "test:headers": "node --test scripts/protected-headers.test.mjs",
+    "test:api-rate-config": "node --test scripts/api-rate-config.test.mjs && node scripts/api-rate-config.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

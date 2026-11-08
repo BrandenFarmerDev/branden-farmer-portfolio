@@ -4,6 +4,19 @@ compatibility_date = "2026-09-27"
 workers_dev = false
 preview_urls = false
 
+# Collection stays disabled pending platform metadata privacy and operator alert proof.
+[observability]
+enabled = false
+redact_query_string = true
+
+[observability.logs]
+enabled = false
+invocation_logs = false
+head_sampling_rate = 0.01
+
+[observability.traces]
+enabled = false
+
 # Daily contact-delivery retries and retention cleanup.
 [triggers]
 crons = ["0 7 * * *"]
@@ -139,4 +152,29 @@ namespace_id = "1004"
 
 [env.production.ratelimits.simple]
 limit = 3
+period = 60
+
+
+[[ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "2001"
+
+[ratelimits.simple]
+limit = 300
+period = 60
+
+[[env.preview.ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "2002"
+
+[env.preview.ratelimits.simple]
+limit = 300
+period = 60
+
+[[env.production.ratelimits]]
+name = "API_RATE_LIMITER"
+namespace_id = "2003"
+
+[env.production.ratelimits.simple]
+limit = 300
 period = 60

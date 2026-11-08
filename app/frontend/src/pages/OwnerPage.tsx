@@ -33,7 +33,7 @@ export function OwnerPage() {
     } catch (error) {
       if (loadId !== latestLoad.current) return;
       // Cross-origin Access redirects surface as network errors rather than HTTP statuses.
-      setSignInRequired(error instanceof TypeError || (error instanceof Error && "status" in error && error.status === 403));
+      setSignInRequired(error instanceof TypeError || (error instanceof Error && "status" in error && (error.status === 0 || error.status === 403)));
       setLoadError(error instanceof Error ? error.message : "Owner tools are unavailable.");
     }
   }, []);
