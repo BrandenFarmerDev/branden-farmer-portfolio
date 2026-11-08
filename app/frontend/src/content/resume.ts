@@ -25,26 +25,43 @@ export const resumeContent = {
   email: "branden_farmer@live.com",
   emailHref: "mailto:branden_farmer@live.com",
   summary:
-    "Business intelligence and application developer with 10+ years of experience across analytics, data engineering, production planning, and manufacturing. Builds Power BI, Power Apps, Power Automate, SharePoint, and Palantir Foundry solutions using SQL, Python, and TypeScript to support operational planning and executive decisions.",
+    "Business intelligence, data engineering, and application developer with 10+ years of experience across analytics, production planning, and manufacturing. Production experience maintaining data models and pipelines with dbt, AWS, PostgreSQL, and Amazon Redshift. Develops data products for a major utility client using Palantir Foundry, Python, PySpark, TypeScript, React, and Power BI to connect large-scale data with operational decisions.",
   experience: [
+    {
+      name: "Guidehouse",
+      location: "",
+      roles: [
+        {
+          title: "Product Developer",
+          dates: "Oct 2026 - Present",
+          highlights: [
+            "Develop data products and operational applications for a major utility client, connecting large-scale datasets with business workflows and decision-making in Palantir Foundry.",
+            "Build and maintain Palantir Foundry data pipelines using Python and PySpark to transform and integrate large volumes of data for analytics and downstream products.",
+            "Design ontologies and develop TypeScript logic, custom React applications, and widgets in Foundry to deliver intuitive, data-driven tools for business users.",
+            "Create Power BI dashboards that turn complex utility data into clear operational insights and support the client's data and product needs.",
+          ],
+        },
+      ],
+    },
     {
       name: "Sierra Nevada Corporation",
       location: "Sparks, NV",
       roles: [
         {
           title: "Business Intelligence Developer III",
-          dates: "May 2022 - Present",
+          dates: "May 2022 - Sep 2026",
           highlights: [
-            "Design and deliver enterprise BI, analytics, and operational applications using Power BI, Palantir Foundry, SQL, and Python, improving decision-making efficiency by 10% and generating approximately $30,000 in annual savings.",
-            "Build and maintain Power BI dashboards, custom Power BI visuals, semantic models, DAX measures, Power Query transformations, and KPI reporting that translate complex operational data into actionable insights.",
-            "Build Palantir Foundry operational applications using Workshop, Ontology, Actions, and function-backed workflows for planning, KPI tracking, data-quality exceptions, workflow management, and decision traceability.",
-            "Engineer automated ETL/ELT and data-integration workflows across SQL Server, PostgreSQL/AWS RDS, SharePoint, and REST/Graph/GraphQL APIs with validation, logging, exception handling, and data-quality controls.",
+            "Designed and delivered enterprise BI, analytics, and operational applications using Power BI, Palantir Foundry, SQL, Python, and PySpark, improving decision-making efficiency by 10% and generating approximately $30,000 in annual savings.",
+            "Built and maintained Power BI dashboards, custom Power BI visuals, semantic models, DAX measures, Power Query transformations, and KPI reporting that translate complex operational data into actionable insights.",
+            "Built Palantir Foundry operational applications using Workshop, Ontology, Actions, and function-backed workflows for planning, KPI tracking, data-quality exceptions, workflow management, and decision traceability.",
+            "Engineered automated ETL/ELT and data-integration workflows across SQL Server, PostgreSQL/AWS RDS, SharePoint, and REST/Graph/GraphQL APIs with validation, logging, exception handling, and data-quality controls.",
+            "Maintained production dbt data models and pipelines on AWS using PostgreSQL and Amazon Redshift to support reporting and analytics.",
             "Developed and implemented 10+ Power Apps and Power Automate solutions, reducing manual workload by 25% while improving workflow visibility, standardization, and accountability.",
-            "Develop SharePoint Online solutions, including SharePoint Framework (SPFx) web parts, and custom Power Apps Component Framework (PCF) controls using TypeScript and JavaScript.",
-            "Author and optimize advanced SQL queries, views, stored procedures, and data models for reporting, data warehousing, application backends, and ad hoc analysis.",
-            "Build Python automations for data manipulation, reconciliation, cost analysis, scheduled processing, RPA, and automated report generation.",
-            "Perform cost analysis and data-quality validation using Python and SQL, identifying process improvements and supporting more reliable resource allocation.",
-            "Partner with business leaders, IT, cybersecurity, and platform teams to gather requirements, map processes, define KPIs, document solutions, and deliver governed analytics in enterprise environments.",
+            "Developed SharePoint Online solutions, including SharePoint Framework (SPFx) web parts, and custom Power Apps Component Framework (PCF) controls using TypeScript and JavaScript.",
+            "Authored and optimized advanced SQL queries, views, stored procedures, and data models for reporting, data warehousing, application backends, and ad hoc analysis.",
+            "Built Python automations for data manipulation, reconciliation, cost analysis, scheduled processing, RPA, and automated report generation.",
+            "Performed cost analysis and data-quality validation using Python and SQL, identifying process improvements and supporting more reliable resource allocation.",
+            "Partnered with business leaders, IT, cybersecurity, and platform teams to gather requirements, map processes, define KPIs, document solutions, and deliver governed analytics in enterprise environments.",
           ],
         },
         {
@@ -104,7 +121,7 @@ export const resumeContent = {
     {
       title: "Data Engineering & Databases",
       skills:
-        "SQL, SQL Server, PostgreSQL, AWS RDS, ETL/ELT, data pipelines, data warehousing, data modeling, schema design, stored procedures, views, query optimization, data integration, data quality, reconciliation",
+        "SQL, dbt, SQL Server, PostgreSQL, AWS (Amazon Redshift, RDS), PySpark, ETL/ELT, data pipelines, data warehousing, data modeling, schema design, stored procedures, views, query optimization, data integration, data quality, reconciliation",
     },
     {
       title: "Development & Automation",
@@ -114,7 +131,7 @@ export const resumeContent = {
     {
       title: "Platforms & Delivery",
       skills:
-        "Palantir Foundry (Workshop, Ontology, Actions, AIP), SharePoint Online development, Microsoft 365, Azure Functions, Azure SQL, API Management, Key Vault, Application Insights, Git/GitHub, CI/CD",
+        "Palantir Foundry (data pipelines, ontology design, Workshop, Actions, AIP, custom React apps and widgets), SharePoint Online development, Microsoft 365, Azure Functions, Azure SQL, API Management, Key Vault, Application Insights, Git/GitHub, CI/CD",
     },
     {
       title: "Business Capabilities",
@@ -143,7 +160,7 @@ export const resumeContent = {
     {
       title: "Bachelor of Science in Computer Science",
       organization: "Western Governors University (WGU)",
-      date: "In progress (2026)",
+      date: "Completed",
     },
     {
       title: "IBM Full Stack Application Development MicroBachelors Program Certificate",
