@@ -6,6 +6,16 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Revisit major toolchain guards when parser/plugins and the Node runtime support them.
+    ignore:
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@eslint/js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       npm-development-dependencies:
         dependency-type: development
