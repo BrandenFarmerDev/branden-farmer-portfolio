@@ -103,11 +103,11 @@ export const careerMilestones = [
       "Moved from executing the work to coordinating schedules, capacity, materials, performance measures, and the people responsible for delivery.",
   },
   {
-    period: "2022–Present",
+    period: "2022–2026",
     title: "Business intelligence and application development",
     roles: "Business Intelligence Developer III",
     description:
-      "Builds analytics, data integrations, automations, and operational applications that connect governed technical systems to practical decisions.",
+      "Built analytics, data integrations, automations, and operational applications that connect governed technical systems to practical decisions.",
   },
 ] as const;
 

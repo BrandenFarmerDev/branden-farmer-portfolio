@@ -19,6 +19,7 @@ export function createTestD1(migrations: string[] = ["0001_knowledge.sql", "0002
       run: async () => ({ meta: { changes: Number(database.prepare(sql).run(...values).changes) } }),
       first: async () => database.prepare(sql).get(...values) ?? null,
       all: async () => ({ results: database.prepare(sql).all(...values), meta: {} }),
+      allSync: () => ({ results: database.prepare(sql).all(...values), meta: {} }),
     };
   };
 
@@ -32,7 +33,8 @@ export function createTestD1(migrations: string[] = ["0001_knowledge.sql", "0002
       database.exec("BEGIN");
       try {
         const results = [];
-        for (const item of statements) results.push(await item.all());
+        // Runs synchronously inside the transaction, so concurrent batches cannot interleave (D1 batches are atomic).
+        for (const item of statements) results.push(item.allSync());
         database.exec("COMMIT");
         return results;
       } catch (error) {

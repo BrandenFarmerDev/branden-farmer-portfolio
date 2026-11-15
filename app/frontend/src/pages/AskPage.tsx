@@ -278,7 +278,7 @@ export function AskPage() {
               ) : null}
               {result.gaps?.length ? (
                 <>
-                  <h3>Unverified or missing requirements</h3>
+                  <h3>Not verified by the portfolio evidence</h3>
                   <ul>{result.gaps.map((item) => <li key={item}>{item}</li>)}</ul>
                 </>
               ) : null}

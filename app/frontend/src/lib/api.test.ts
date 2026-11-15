@@ -107,6 +107,15 @@ describe("API client", () => {
     await expect(submitAsk(request)).resolves.toEqual(evidenceOnly);
     expect(fetch).toHaveBeenCalledWith("http://localhost:8787/api/ask", expect.objectContaining({ credentials: "include" }));
     await expect(submitAsk(request)).rejects.toMatchObject({ status: 400, message: "Too short." });
+
+    // An unrecorded generation failure is a 503 outage that must still show its evidence links.
+    const outage = { status: "evidence_only", message: "Generated answers are temporarily unavailable.", remaining: 4,
+      evidence: [{ id: "skills-business-intelligence", title: "Technical skills", url: "/resume#skills-business-intelligence" }] };
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(Response.json(outage, { status: 503 }))
+      .mockResolvedValueOnce(Response.json({ error: "internal_error", message: "The service could not complete the request." }, { status: 503 }));
+    await expect(submitAsk(request)).resolves.toEqual(outage);
+    await expect(submitAsk(request)).rejects.toMatchObject({ status: 503, details: { error: "internal_error" } });
   });
 
   it("calls owner routes with Access credentials and surfaces failures", async () => {

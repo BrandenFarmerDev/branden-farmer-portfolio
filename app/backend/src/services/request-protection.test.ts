@@ -7,7 +7,8 @@ import { protectRequest } from "./request-protection";
 const request = (ip?: string) => new Request("https://api.example/api/private?token=private-marker", {
   headers: ip === undefined ? {} : { "CF-Connecting-IP": ip },
 });
-const fetchWorker = (req: Request, env: Env) => worker.fetch(req as Parameters<typeof worker.fetch>[0], env);
+const fetchWorker = (req: Request, env: Env) => worker.fetch(req as Parameters<typeof worker.fetch>[0], env,
+  { waitUntil: () => undefined } as unknown as ExecutionContext);
 
 beforeEach(() => {
   vi.spyOn(console, "warn").mockImplementation(() => undefined);
