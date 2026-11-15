@@ -1,4 +1,5 @@
 import type { AskMode, AskRequest, AskResponse, AskStatusResponse, EvidenceLink } from "@portfolio/shared";
+import { dispatchAiFailureAlert, recordAiFailure } from "../services/ai-alerts";
 import { DEFAULT_MODEL, generateAnswer, recordUsage } from "../services/assistant";
 import { errorResponse, hashClient, readJson } from "../services/http";
 import { searchKnowledge } from "../services/knowledge";
@@ -36,7 +37,7 @@ export function validateAskRequest(value: unknown): AskRequest | null {
   return { mode, text, turnstileToken };
 }
 
-export async function askRoute(request: Request, env: Env): Promise<Response> {
+export async function askRoute(request: Request, env: Env, ctx?: Pick<ExecutionContext, "waitUntil">): Promise<Response> {
   const db = env.PORTFOLIO_DB;
   if (!db || !env.ASK_RATE_LIMITER || !env.ASK_SIGNING_SECRET || !env.TURNSTILE_SECRET_KEY || !env.TURNSTILE_EXPECTED_HOSTNAME) {
     return unavailable("Ask Branden is temporarily unavailable. Browse the portfolio evidence directly.");
@@ -105,6 +106,17 @@ export async function askRoute(request: Request, env: Env): Promise<Response> {
   const model = env.AI_MODEL ?? DEFAULT_MODEL;
   const generation = await generateAnswer(env.AI as Ai, model, ask.mode, ask.text, passages);
   await recordUsage(db, day, model, generation).catch(() => undefined);
+
+  if (generation.failure) {
+    try {
+      const incident = await recordAiFailure(db, generation.failure);
+      if (incident.created) ctx?.waitUntil(dispatchAiFailureAlert(env, incident.key));
+    } catch {
+      // The failure could not be recorded for alerting, so report it as an outage while keeping the evidence links.
+      return askResponse({ status: "evidence_only", message: "Generated answers are temporarily unavailable. These approved sections match your request.",
+        evidence, remaining: quota.remaining, allowance: quota.allowance }, 503, visitor.setCookie);
+    }
+  }
 
   if (!generation.answer) {
     return askResponse({ status: "evidence_only", message: "A supported answer could not be produced. These approved sections match your request.",

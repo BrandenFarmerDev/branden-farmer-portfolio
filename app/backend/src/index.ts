@@ -4,7 +4,7 @@ import { contactRoute } from "./routes/contact";
 import { healthRoute } from "./routes/health";
 import { ownerRoute } from "./routes/owner";
 import { protectRequest } from "./services/request-protection";
-import { runMaintenance } from "./services/maintenance";
+import { runScheduledTasks } from "./services/maintenance";
 import type { Env } from "./types";
 
 function isAllowedOrigin(request: Request, env: Env): boolean {
@@ -53,7 +53,7 @@ function originForbidden(): Response {
 }
 
 export default {
-  async fetch(request, env): Promise<Response> {
+  async fetch(request, env, ctx): Promise<Response> {
     const startedAt = Date.now();
     const requestId = crypto.randomUUID();
     const admission = await protectRequest(request, env);
@@ -81,7 +81,7 @@ export default {
       } else if (pathname === "/api/contact" || pathname === "/api/ask") {
         if (request.method !== "POST") response = methodNotAllowed("POST");
         else if (!isAllowedOrigin(request, env)) response = originForbidden();
-        else response = pathname === "/api/ask" ? await askRoute(request, env) : await contactRoute(request, env);
+        else response = pathname === "/api/ask" ? await askRoute(request, env, ctx) : await contactRoute(request, env);
       } else if (pathname === "/api/webhooks/cal") {
         response = request.method === "POST" ? await calWebhookRoute(request, env) : methodNotAllowed("POST");
       } else if (pathname.startsWith("/api/owner/")) {
@@ -106,8 +106,7 @@ export default {
     return finalResponse;
   },
   scheduled(_event, env, ctx): void {
-    ctx.waitUntil(runMaintenance(env).catch(() => {
-      console.error(JSON.stringify({ event: "maintenance_error" }));
-    }));
+    // A rejected task marks the scheduled run as failed instead of hiding it in disabled logs.
+    ctx.waitUntil(runScheduledTasks(env));
   },
 } satisfies ExportedHandler<Env>;

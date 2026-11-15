@@ -74,9 +74,90 @@ describe("askRoute", () => {
     expect(env.AI!.run).not.toHaveBeenCalled();
   });
 
+  it("resolves wrapped citations to the original permitted evidence links", async () => {
+    const wrapped = JSON.stringify({ answer: "Branden builds Power BI dashboards.", relevant: [], gaps: [],
+      citations: ["[skills-business-intelligence]", "skills-business-intelligence", "[unknown]"] });
+    const env = createEnv({ AI: { run: vi.fn().mockResolvedValue({ choices: [{ message: { content: wrapped } }] }) } as unknown as Ai });
+    const response = await askRoute(ask(), env);
+    expect(await response.json()).toMatchObject({ status: "answered", remaining: 4,
+      evidence: [{ id: "skills-business-intelligence", url: "/resume#skills-business-intelligence" }] });
+  });
+
+  it.each(["[unknown]", "[[skills-business-intelligence]]", "[skills-business-intelligence", "[https://example.com/skills-business-intelligence]"])(
+    "preserves fallback for invalid-only citations: %s", async (citation) => {
+      const invalid = JSON.stringify({ answer: "Guess", citations: [citation] });
+      const env = createEnv({ AI: { run: vi.fn().mockResolvedValue({ response: invalid }) } as unknown as Ai });
+      const body = await (await askRoute(ask(), env)).json() as AskResponse;
+      expect(body).toMatchObject({ status: "evidence_only", remaining: 4 });
+      expect(body.evidence).toContainEqual(expect.objectContaining({ id: "skills-business-intelligence", url: "/resume#skills-business-intelligence" }));
+    },
+  );
+
   it("falls back to evidence when the model output is unsupported", async () => {
     const env = createEnv({ AI: { run: vi.fn().mockResolvedValue({ response: "{\"answer\":\"Guess\",\"citations\":[\"invented\"]}" }) } as unknown as Ai });
     expect(await (await askRoute(ask(), env)).json()).toMatchObject({ status: "evidence_only", remaining: 4 });
+  });
+
+  it.each([
+    { run: vi.fn().mockRejectedValue(new Error("410 model retired (5028)")) },
+    { run: vi.fn().mockRejectedValue(new Error("provider unavailable")) },
+    { run: vi.fn().mockResolvedValue(null) },
+    { run: vi.fn().mockResolvedValue({ choices: [{ message: { content: "{invalid}" } }] }) },
+  ])("preserves evidence links and allowance after provider failure %#", async (ai) => {
+    const env = createEnv({ AI: ai as unknown as Ai });
+    const response = await askRoute(ask(), env);
+    expect(response.status).toBe(200);
+    const body = await response.json() as AskResponse;
+    expect(body).toMatchObject({ status: "evidence_only", remaining: 4 });
+    expect(body.evidence).toContainEqual(expect.objectContaining({ id: "skills-business-intelligence", url: "/resume#skills-business-intelligence" }));
+    expect(ai.run).toHaveBeenCalledTimes(1);
+  });
+
+  it("records one alert incident per category and day and dispatches only the first in the background", async () => {
+    const waitUntil = vi.fn();
+    const env = createEnv({ AI: { run: vi.fn().mockRejectedValue(new Error("provider unavailable")) } as unknown as Ai });
+    expect((await askRoute(ask(), env, { waitUntil })).status).toBe(200);
+    expect((await askRoute(ask(), env, { waitUntil })).status).toBe(200);
+    expect(waitUntil).toHaveBeenCalledTimes(1);
+    await expect(waitUntil.mock.calls[0][0]).resolves.toBe("unavailable"); // no Resend configuration in this test
+    const rows = (await db.prepare("SELECT key, value FROM app_settings WHERE key LIKE 'ai_failure_alert%'").all<{ key: string; value: string }>()).results;
+    expect(rows).toHaveLength(1);
+    expect(rows[0].key).toMatch(/^ai_failure_alert:provider_error:\d{4}-\d{2}-\d{2}$/);
+    expect(JSON.parse(rows[0].value)).toMatchObject({ category: "provider_error", status: "pending", attempts: 0 });
+    const day = rows[0].key.slice(-10);
+    expect(await db.prepare("SELECT value FROM app_settings WHERE key = ?").bind(`ai_failure_count:provider_error:${day}`).first()).toEqual({ value: "2" });
+    expect(rows[0].value).not.toContain("Power BI");
+    expect(rows[0].value).not.toContain("provider unavailable");
+  });
+
+  it("creates no alert incident for intentional evidence-only paths", async () => {
+    const waitUntil = vi.fn();
+    await askRoute(ask(), createEnv({ AI_ENABLED: "false" }), { waitUntil });
+    await askRoute(ask({ mode: "question", text: "What is his favorite color?", turnstileToken: "token" }), createEnv(), { waitUntil });
+    await askRoute(ask({ mode: "question", text: "x", turnstileToken: "token" }), createEnv(), { waitUntil });
+    const env = createEnv();
+    let cookie: string | undefined;
+    for (let index = 0; index < 6; index += 1) {
+      const response = await askRoute(ask(undefined, cookie), env, { waitUntil });
+      cookie ??= response.headers.get("Set-Cookie")!.split(";")[0];
+    }
+    expect(waitUntil).not.toHaveBeenCalled();
+    expect(await db.prepare("SELECT count(*) AS total FROM app_settings WHERE key LIKE 'ai_failure%'").first()).toEqual({ total: 0 });
+  });
+
+  it("reports an unrecorded generation failure as a 503 outage that still carries the evidence links", async () => {
+    const failingStorage = new Proxy(db, { get: (target, property) => property === "prepare"
+      ? (sql: string) => { if (sql.startsWith("INSERT INTO app_settings")) throw new Error("D1 unavailable"); return target.prepare(sql); }
+      : Reflect.get(target, property) });
+    const waitUntil = vi.fn();
+    const env = createEnv({ PORTFOLIO_DB: failingStorage, AI: { run: vi.fn().mockResolvedValue({ response: "{broken}" }) } as unknown as Ai });
+    const response = await askRoute(ask(), env, { waitUntil });
+    expect(response.status).toBe(503);
+    const body = await response.json() as AskResponse;
+    expect(body).toMatchObject({ status: "evidence_only", remaining: 4, allowance: { used: 1 } });
+    expect(body.evidence).toContainEqual(expect.objectContaining({ id: "skills-business-intelligence" }));
+    expect(JSON.stringify(body)).not.toContain("D1 unavailable");
+    expect(waitUntil).not.toHaveBeenCalled();
   });
 
   it("rejects invalid, throttled, and unverified requests before retrieval", async () => {

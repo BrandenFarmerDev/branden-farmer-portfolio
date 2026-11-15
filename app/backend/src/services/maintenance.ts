@@ -1,3 +1,4 @@
+import { runAiAlertMaintenance } from "./ai-alerts";
 import { retryContacts } from "./contact-store";
 import { deliverContact } from "./resend";
 import type { Env } from "../types";
@@ -22,4 +23,13 @@ export async function runMaintenance(env: Env): Promise<void> {
     db.prepare("DELETE FROM ai_daily_usage WHERE usage_day < ?").bind(usageCutoff),
     db.prepare("DELETE FROM ai_usage_summary WHERE usage_day < ?").bind(summaryCutoff),
   ]);
+}
+
+/**
+ * Runs contact/retention maintenance and AI alert recovery concurrently, so slow contact retries cannot delay
+ * alert recovery. Either failing rejects, which marks the scheduled run as failed.
+ */
+export async function runScheduledTasks(env: Env): Promise<void> {
+  const results = await Promise.allSettled([runMaintenance(env), runAiAlertMaintenance(env)]);
+  if (results.some((result) => result.status === "rejected")) throw new Error("Scheduled maintenance did not complete.");
 }

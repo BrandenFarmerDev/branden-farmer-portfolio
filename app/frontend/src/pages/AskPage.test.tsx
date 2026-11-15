@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -123,6 +123,33 @@ describe("AskPage", () => {
     expect(screen.getByText("Résumé")).toHaveClass("ask-evidence-source");
     expect(screen.getByText("1 of 5 used")).toBeInTheDocument();
     expect(JSON.parse(sessionStorage.getItem("ask-branden:last-result")!)).toMatchObject({ status: "answered" });
+  });
+
+  it("lists a job description's missing requirement and other unverified items under an evidence-scoped heading", async () => {
+    // Gaps are the exact native Llama 3.3 output for the jd-0 evaluation case.
+    mocks.submitAsk.mockResolvedValueOnce({
+      status: "answered",
+      message: "Answer generated only from the cited portfolio evidence.",
+      answer: "Branden has experience as a Business Intelligence Developer III, with skills in Power BI, SQL, and Power Platform.",
+      relevant: ["Power BI", "DAX measures"],
+      gaps: ["Tableau experience", "Current employment status"],
+      evidence: [{ id: "skills-business-intelligence", title: "Technical skills: Business Intelligence", url: "/resume#skills-business-intelligence" }],
+      remaining: 4,
+      allowance: allowance(1),
+    });
+    const user = userEvent.setup();
+    renderPage();
+
+    await user.click(await screen.findByRole("button", { name: "Compare a job description" }));
+    await user.click(screen.getByLabelText("Job description"));
+    await user.paste("Business Intelligence Developer. Build Power BI dashboards. Tableau experience preferred.");
+    await user.click(screen.getByRole("button", { name: "Complete security check" }));
+    await user.click(screen.getByRole("button", { name: "Ask Branden" }));
+
+    const heading = await screen.findByRole("heading", { name: "Not verified by the portfolio evidence" });
+    const items = within(heading.nextElementSibling as HTMLElement).getAllByRole("listitem").map((item) => item.textContent);
+    expect(items).toEqual(["Tableau experience", "Current employment status"]);
+    expect(screen.queryByRole("heading", { name: /missing requirements/i })).not.toBeInTheDocument();
   });
 
   it("disables asking with an explanation once today's answers are used", async () => {
